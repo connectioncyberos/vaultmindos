@@ -1,0 +1,47 @@
+{
+  "$schema": "./paths.schema.json",
+  "version": "1.0",
+  "workspace": "C:\\Projetos",
+  "onedrive": "C:\\Users\\joaqu\\OneDrive\\Projetos",
+  "external": "E:\\Projetos",
+  "snapshots": "E:\\Projetos\\Snapshots",
+  "github": {
+    "organization": "connectioncyberos",
+    "defaultBranch": "main"
+  },
+  "excludedDirectories": [
+    "node_modules",
+    ".next",
+    ".git",
+    ".vercel",
+    "dist",
+    "build",
+    "coverage",
+    ".turbo",
+    ".cache",
+    "temp",
+    "cache"
+  ],
+  "excludedFiles": [
+    ".env",
+    ".env.local",
+    ".env.development.local",
+    ".env.production.local",
+    "*.log"
+  ],
+  "commitTypes": [
+    "feat",
+    "fix",
+    "docs",
+    "refactor",
+    "test",
+    "perf",
+    "build",
+    "ci",
+    "chore",
+    "style",
+    "security",
+    "backup",
+    "release"
+  ]
+}
