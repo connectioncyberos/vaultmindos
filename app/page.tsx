@@ -49,6 +49,13 @@ export default function HomePage() {
           <li>docs/devops/repository-backup-foundation-v1.md</li>
         </ul>
       </section>
+
+      {/* Acoes Secundarias */}
+      <section className="mt-3 border-t border-neutral-200 pt-6">
+        <a href="/login" className="text-sm font-medium text-neutral-700 underline">
+          Entrar
+        </a>
+      </section>
     </main>
   );
 }
