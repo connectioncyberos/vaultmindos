@@ -1,0 +1,14 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  --color-state-success: #16a34a;
+  --color-state-warning: #d97706;
+  --color-state-error: #dc2626;
+  --color-state-info: #2563eb;
+}
+
+body {
+  color-scheme: light;
+}
