@@ -382,7 +382,10 @@ export async function getRelatedArticles(
       .eq("status", "published");
     const rows = data ?? [];
     const categories = await fetchCategoriesByIds(rows.map((r) => r.category_id as string));
-    return rows.map((row) => mapArticleSummary(row, categories.get(row.category_id as string) ?? null));
+    const summaries = rows.map((row) =>
+      mapArticleSummary(row, categories.get(row.category_id as string) ?? null),
+    );
+    return attachPrimaryEntitySlug(summaries);
   }
 
   if (!categoryId) return [];
@@ -398,5 +401,8 @@ export async function getRelatedArticles(
 
   const rows = data ?? [];
   const categories = await fetchCategoriesByIds(rows.map((r) => r.category_id as string));
-  return rows.map((row) => mapArticleSummary(row, categories.get(row.category_id as string) ?? null));
+  const summaries = rows.map((row) =>
+    mapArticleSummary(row, categories.get(row.category_id as string) ?? null),
+  );
+  return attachPrimaryEntitySlug(summaries);
 }
