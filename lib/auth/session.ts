@@ -1,3 +1,4 @@
+import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 
 export type Role = "admin" | "editor" | "author" | "subscriber";
@@ -44,3 +45,20 @@ export async function getCurrentUser(): Promise<CurrentUser | null> {
 
 /** Papeis com algum nivel de acesso ao CMS (Modulo 7). */
 export const CMS_ROLES: Role[] = ["admin", "editor", "author"];
+
+/**
+ * Guarda de acesso pra Server Actions do CMS (Modulo 7). O layout de
+ * /admin ja bloqueia a navegacao por pagina, mas uma Server Action
+ * pode ser chamada diretamente — cada action de escrita (create/
+ * update/delete de artigos, categorias, tags) chama isto primeiro.
+ * Lanca erro em vez de redirect: quem chama esta dentro de uma Server
+ * Action de formulario, e o erro vira mensagem de volta pro usuario.
+ */
+export async function assertCmsAccess(): Promise<CurrentUser> {
+  const user = await getCurrentUser();
+  if (!user) redirect("/login");
+  if (!CMS_ROLES.includes(user.role)) {
+    throw new Error("Sem permissão para esta ação. Papel atual: " + user.role);
+  }
+  return user;
+}

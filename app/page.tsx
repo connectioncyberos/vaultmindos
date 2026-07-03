@@ -1,61 +1,103 @@
+import { Header } from "@/components/layout/Header";
+import { Footer } from "@/components/layout/Footer";
+import { Container } from "@/components/layout/Container";
+import { CategoryCard } from "@/components/content/CategoryCard";
+import { ArticleCard } from "@/components/content/ArticleCard";
+import { NewsletterBox } from "@/components/content/NewsletterBox";
+import { getAllCategories, getRecentPublishedArticles } from "@/lib/content/queries";
+import { SITE_NAME, SITE_URL } from "@/lib/seo/metadata";
+
+export const metadata = {
+  title: `${SITE_NAME} — Sistema Operacional de Conhecimento`,
+  description:
+    "IA, Tecnologia, Automação, SEO e Negócios Digitais organizados em domínios e clusters.",
+  alternates: { canonical: SITE_URL },
+};
+
 /**
- * Home — segue a hierarquia fixa do Visual Language v1.0 (secao 4):
- * Contexto -> Titulo -> Descricao -> Acao Principal -> Conteudo ->
- * Conteudo Relacionado -> Acoes Secundarias. Mobile-first: a ordem
- * das secoes e a mesma em qualquer largura de tela.
+ * Home do Portal Publico (Modulo 6) — substitui a pagina placeholder
+ * dos Modulos 2-5. Segue a hierarquia fixa: Contexto -> Titulo ->
+ * Descricao -> Acao Principal -> Conteudo (dominios) -> Conteudo
+ * Relacionado (artigos recentes) -> Acoes Secundarias (newsletter).
  */
-export default function HomePage() {
+export default async function HomePage() {
+  const [categorias, artigosRecentes] = await Promise.all([
+    getAllCategories(),
+    getRecentPublishedArticles(6),
+  ]);
+
   return (
-    <main className="mx-auto flex max-w-3xl flex-col gap-6 px-4 py-6">
-      {/* Contexto */}
-      <p className="text-sm font-medium uppercase tracking-wide text-neutral-500">
-        VaultMindOS
-      </p>
-
-      {/* Titulo Principal */}
-      <h1 className="text-3xl font-bold leading-tight text-neutral-900">
-        Sistema Operacional de Conhecimento
-      </h1>
-
-      {/* Descricao */}
-      <p className="text-base leading-relaxed text-neutral-600">
-        Fundação em construção — a base operacional do VaultMindOS está sendo
-        montada sobre a ConnectionCyber Developer Platform (CDP).
-      </p>
-
-      {/* Acao Principal */}
-      <a
-        href="https://github.com/connectioncyberos/vaultmindos"
-        className="w-fit rounded-md bg-neutral-900 px-4 py-2 text-sm font-medium text-white"
-      >
-        Ver repositório
-      </a>
-
-      {/* Conteudo */}
-      <section className="mt-3 border-t border-neutral-200 pt-6">
-        <h2 className="text-lg font-semibold text-neutral-900">Módulo 2 em andamento</h2>
-        <p className="mt-2 text-sm text-neutral-600">
-          Bootstrap do projeto Next.js, TypeScript e Tailwind concluído. Os módulos
-          seguintes (Supabase, Autenticação, Portal Público, CMS) seguem o{" "}
-          <code>Master Execution Roadmap v1.0</code>.
+    <>
+      <Header />
+      <Container className="flex flex-col gap-6 py-6">
+        {/* Contexto */}
+        <p className="text-sm font-medium uppercase tracking-wide text-neutral-500">
+          VaultMindOS
         </p>
-      </section>
 
-      {/* Conteudo Relacionado */}
-      <section className="mt-3">
-        <h2 className="text-lg font-semibold text-neutral-900">Documentação</h2>
-        <ul className="mt-2 list-inside list-disc text-sm text-neutral-600">
-          <li>docs/blueprint/origem-do-projeto-v1.md</li>
-          <li>docs/devops/repository-backup-foundation-v1.md</li>
-        </ul>
-      </section>
+        {/* Titulo Principal */}
+        <h1 className="text-3xl font-bold leading-tight text-neutral-900">
+          Sistema Operacional de Conhecimento
+        </h1>
 
-      {/* Acoes Secundarias */}
-      <section className="mt-3 border-t border-neutral-200 pt-6">
-        <a href="/login" className="text-sm font-medium text-neutral-700 underline">
-          Entrar
-        </a>
-      </section>
-    </main>
+        {/* Descricao */}
+        <p className="text-base leading-relaxed text-neutral-600">
+          IA, Tecnologia, Automação, SEO e Negócios Digitais organizados em
+          domínios e clusters — não é só um blog, é uma base de conhecimento
+          navegável.
+        </p>
+
+        {/* Acao Principal */}
+        {categorias[0] && (
+          <a
+            href={`/vault/${categorias[0].slug}`}
+            className="w-fit rounded-md bg-neutral-900 px-4 py-2 text-sm font-medium text-white"
+          >
+            Explorar o Vault
+          </a>
+        )}
+
+        {/* Conteudo — dominios */}
+        <section className="mt-3 border-t border-neutral-200 pt-6">
+          <h2 className="text-lg font-semibold text-neutral-900">Domínios</h2>
+          {categorias.length === 0 ? (
+            <p className="mt-2 text-sm text-neutral-600">
+              Nenhum domínio cadastrado ainda. Aplique{" "}
+              <code>docs/database/seed-content-v1.sql</code> ou crie um em{" "}
+              <code>/admin/categorias</code>.
+            </p>
+          ) : (
+            <div className="mt-4 grid grid-cols-1 gap-4 sm:grid-cols-2">
+              {categorias.map((categoria) => (
+                <CategoryCard
+                  key={categoria.id}
+                  href={`/vault/${categoria.slug}`}
+                  name={categoria.name}
+                  description={categoria.description}
+                />
+              ))}
+            </div>
+          )}
+        </section>
+
+        {/* Conteudo Relacionado — artigos recentes */}
+        <section className="mt-3 border-t border-neutral-200 pt-6">
+          <h2 className="text-lg font-semibold text-neutral-900">Artigos recentes</h2>
+          {artigosRecentes.length === 0 ? (
+            <p className="mt-2 text-sm text-neutral-600">Nenhum artigo publicado ainda.</p>
+          ) : (
+            <div className="mt-4 grid grid-cols-1 gap-4 sm:grid-cols-2">
+              {artigosRecentes.map((artigo) => (
+                <ArticleCard key={artigo.id} article={artigo} />
+              ))}
+            </div>
+          )}
+        </section>
+
+        {/* Acoes Secundarias */}
+        <NewsletterBox />
+      </Container>
+      <Footer />
+    </>
   );
 }
