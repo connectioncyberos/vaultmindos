@@ -46,15 +46,15 @@ export function ArticleDetail({
       )}
 
       {/* Titulo Principal */}
-      <h1 className="text-3xl font-bold leading-tight text-neutral-900">{article.title}</h1>
+      <h1 className="text-3xl font-bold leading-tight text-neutral-100">{article.title}</h1>
 
       {/* Descricao */}
       {article.excerpt && (
-        <p className="text-base leading-relaxed text-neutral-600">{article.excerpt}</p>
+        <p className="text-base leading-relaxed text-neutral-400">{article.excerpt}</p>
       )}
 
       {/* Conteudo */}
-      <div className="whitespace-pre-line text-base leading-relaxed text-neutral-800">
+      <div className="whitespace-pre-line text-base leading-relaxed text-neutral-200">
         {article.content}
       </div>
 

@@ -24,12 +24,12 @@ export default async function AdminLayout({ children }: { children: ReactNode })
     return (
       <main className="mx-auto flex max-w-3xl flex-col gap-6 px-4 py-6">
         <p className="text-sm font-medium uppercase tracking-wide text-neutral-500">VaultMindOS</p>
-        <h1 className="text-3xl font-bold leading-tight text-neutral-900">Painel Administrativo</h1>
-        <p className="text-base leading-relaxed text-neutral-600">
+        <h1 className="text-3xl font-bold leading-tight text-neutral-100">Painel Administrativo</h1>
+        <p className="text-base leading-relaxed text-neutral-400">
           Logado como {user.email} — papel: <code>{user.role}</code>
         </p>
 
-        <section className="mt-3 rounded-md border border-red-300 bg-red-50 p-4 text-sm text-red-900">
+        <section className="mt-3 rounded-md border border-red-900/50 bg-red-950/40 p-4 text-sm text-red-200">
           <p className="font-semibold">Acesso negado</p>
           <p className="mt-1">
             Sua conta está autenticada, mas o papel <code>{user.role}</code> não
@@ -38,10 +38,10 @@ export default async function AdminLayout({ children }: { children: ReactNode })
           </p>
         </section>
 
-        <form action={signOutAction} className="mt-3 border-t border-neutral-200 pt-6">
+        <form action={signOutAction} className="mt-3 border-t border-neutral-800 pt-6">
           <button
             type="submit"
-            className="w-fit rounded-md border border-neutral-300 px-4 py-2 text-sm font-medium text-neutral-900"
+            className="w-fit rounded-md border border-neutral-700 px-4 py-2 text-sm font-medium text-neutral-100"
           >
             Sair
           </button>

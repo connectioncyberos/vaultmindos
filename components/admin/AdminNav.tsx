@@ -10,28 +10,32 @@ const LINKS = [
   { href: "/admin/seo", label: "SEO" },
 ];
 
-/** Nav do CMS (Modulo 7) — mesma em toda rota /admin/*. */
+/** Nav do CMS (Modulo 7) — mesma em toda rota /admin/*. Topo fixo (sticky). */
 export function AdminNav({ user }: { user: CurrentUser }) {
   return (
-    <header className="border-b border-neutral-200 py-4">
-      <div className="mx-auto flex max-w-4xl flex-wrap items-center justify-between gap-4 px-4">
+    <header className="sticky top-0 z-50 border-b border-neutral-800 bg-neutral-950 py-4">
+      <div className="mx-auto flex max-w-7xl flex-wrap items-center justify-between gap-4 px-4">
         <nav className="flex flex-wrap items-center gap-4 text-sm">
-          <span className="font-bold uppercase tracking-wide text-neutral-900">VaultMindOS CMS</span>
+          <Link href="/admin" className="shrink-0">
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img src="/logo.png" alt="VaultMindOS" className="h-7 w-auto object-contain" />
+          </Link>
+          <span className="text-xs font-semibold uppercase tracking-wide text-neutral-500">CMS</span>
           {LINKS.map((link) => (
-            <Link key={link.href} href={link.href} className="text-neutral-600 hover:text-neutral-900">
+            <Link key={link.href} href={link.href} className="text-neutral-400 hover:text-emerald-400">
               {link.label}
             </Link>
           ))}
         </nav>
 
-        <div className="flex items-center gap-3 text-sm text-neutral-600">
+        <div className="flex items-center gap-3 text-sm text-neutral-400">
           <span>
             {user.email} · <code>{user.role}</code>
           </span>
           <form action={signOutAction}>
             <button
               type="submit"
-              className="rounded-md border border-neutral-300 px-3 py-1.5 font-medium text-neutral-900 hover:border-neutral-900"
+              className="rounded-md border border-neutral-700 px-3 py-1.5 font-medium text-neutral-100 hover:border-emerald-500"
             >
               Sair
             </button>

@@ -29,19 +29,14 @@ export default async function HomePage() {
   return (
     <>
       <Header />
-      <Container className="flex flex-col gap-6 py-6">
-        {/* Contexto */}
-        <p className="text-sm font-medium uppercase tracking-wide text-neutral-500">
-          VaultMindOS
-        </p>
-
+      <Container wide className="flex flex-col gap-6 py-6">
         {/* Titulo Principal */}
-        <h1 className="text-3xl font-bold leading-tight text-neutral-900">
+        <h1 className="text-3xl font-bold leading-tight text-neutral-100">
           Sistema Operacional de Conhecimento
         </h1>
 
         {/* Descricao */}
-        <p className="text-base leading-relaxed text-neutral-600">
+        <p className="text-base leading-relaxed text-neutral-400">
           IA, Tecnologia, Automação, SEO e Negócios Digitais organizados em
           domínios e clusters — não é só um blog, é uma base de conhecimento
           navegável.
@@ -51,23 +46,23 @@ export default async function HomePage() {
         {categorias[0] && (
           <a
             href={`/vault/${categorias[0].slug}`}
-            className="w-fit rounded-md bg-neutral-900 px-4 py-2 text-sm font-medium text-white"
+            className="w-fit rounded-md bg-emerald-600 px-4 py-2 text-sm font-medium text-white hover:bg-emerald-500"
           >
             Explorar o Vault
           </a>
         )}
 
         {/* Conteudo — dominios */}
-        <section className="mt-3 border-t border-neutral-200 pt-6">
-          <h2 className="text-lg font-semibold text-neutral-900">Domínios</h2>
+        <section className="mt-3 border-t border-neutral-800 pt-6">
+          <h2 className="text-lg font-semibold text-neutral-100">Domínios</h2>
           {categorias.length === 0 ? (
-            <p className="mt-2 text-sm text-neutral-600">
+            <p className="mt-2 text-sm text-neutral-400">
               Nenhum domínio cadastrado ainda. Aplique{" "}
               <code>docs/database/seed-content-v1.sql</code> ou crie um em{" "}
               <code>/admin/categorias</code>.
             </p>
           ) : (
-            <div className="mt-4 grid grid-cols-1 gap-4 sm:grid-cols-2">
+            <div className="mt-4 grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
               {categorias.map((categoria) => (
                 <CategoryCard
                   key={categoria.id}
@@ -81,12 +76,12 @@ export default async function HomePage() {
         </section>
 
         {/* Conteudo Relacionado — artigos recentes */}
-        <section className="mt-3 border-t border-neutral-200 pt-6">
-          <h2 className="text-lg font-semibold text-neutral-900">Artigos recentes</h2>
+        <section className="mt-3 border-t border-neutral-800 pt-6">
+          <h2 className="text-lg font-semibold text-neutral-100">Artigos recentes</h2>
           {artigosRecentes.length === 0 ? (
-            <p className="mt-2 text-sm text-neutral-600">Nenhum artigo publicado ainda.</p>
+            <p className="mt-2 text-sm text-neutral-400">Nenhum artigo publicado ainda.</p>
           ) : (
-            <div className="mt-4 grid grid-cols-1 gap-4 sm:grid-cols-2">
+            <div className="mt-4 grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
               {artigosRecentes.map((artigo) => (
                 <ArticleCard key={artigo.id} article={artigo} />
               ))}

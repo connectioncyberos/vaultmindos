@@ -27,15 +27,15 @@ export default async function DbCheckPage() {
         Módulo 4 — Diagnóstico
       </p>
 
-      <h1 className="text-3xl font-bold leading-tight text-neutral-900">
+      <h1 className="text-3xl font-bold leading-tight text-neutral-100">
         Verificação de conexão Supabase
       </h1>
 
       <section
         className={`mt-3 rounded-md border p-4 text-sm ${
           conectado
-            ? "border-green-300 bg-green-50 text-green-900"
-            : "border-red-300 bg-red-50 text-red-900"
+            ? "border-emerald-900/50 bg-emerald-950/40 text-emerald-200"
+            : "border-red-900/50 bg-red-950/40 text-red-200"
         }`}
       >
         <p className="font-semibold">
@@ -50,23 +50,23 @@ export default async function DbCheckPage() {
         )}
       </section>
 
-      <section className="mt-3 border-t border-neutral-200 pt-6">
-        <h2 className="text-lg font-semibold text-neutral-900">
+      <section className="mt-3 border-t border-neutral-800 pt-6">
+        <h2 className="text-lg font-semibold text-neutral-100">
           Resultado da query
         </h2>
-        <p className="mt-2 text-sm text-neutral-600">
+        <p className="mt-2 text-sm text-neutral-400">
           <code>select id, slug, name from categories limit 5</code>
         </p>
 
         {conectado && data && data.length === 0 && (
-          <p className="mt-2 text-sm text-neutral-600">
+          <p className="mt-2 text-sm text-neutral-400">
             Conexão funcionando. Tabela <code>categories</code> existe e está
             vazia (esperado — schema recém-aplicado, nenhum dado ainda).
           </p>
         )}
 
         {conectado && data && data.length > 0 && (
-          <ul className="mt-2 list-inside list-disc text-sm text-neutral-600">
+          <ul className="mt-2 list-inside list-disc text-sm text-neutral-400">
             {data.map((row) => (
               <li key={row.id}>
                 {row.name} ({row.slug})
@@ -77,10 +77,10 @@ export default async function DbCheckPage() {
       </section>
 
       <section className="mt-3">
-        <h2 className="text-lg font-semibold text-neutral-900">
+        <h2 className="text-lg font-semibold text-neutral-100">
           Checklist antes de testar
         </h2>
-        <ul className="mt-2 list-inside list-disc text-sm text-neutral-600">
+        <ul className="mt-2 list-inside list-disc text-sm text-neutral-400">
           <li>
             <code>docs/database/schema-v1.sql</code> aplicado no SQL Editor do
             projeto Supabase.

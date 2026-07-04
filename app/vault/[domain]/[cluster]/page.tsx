@@ -44,7 +44,7 @@ export default async function ClusterPage({
   return (
     <>
       <Header />
-      <Container className="flex flex-col gap-6 py-6">
+      <Container wide className="flex flex-col gap-6 py-6">
         <Breadcrumb
           items={[
             { label: "Início", href: "/" },
@@ -59,20 +59,20 @@ export default async function ClusterPage({
         </p>
 
         {/* Titulo Principal */}
-        <h1 className="text-3xl font-bold leading-tight text-neutral-900">{cluster.name}</h1>
+        <h1 className="text-3xl font-bold leading-tight text-neutral-100">{cluster.name}</h1>
 
         {/* Descricao */}
         {cluster.description && (
-          <p className="text-base leading-relaxed text-neutral-600">{cluster.description}</p>
+          <p className="text-base leading-relaxed text-neutral-400">{cluster.description}</p>
         )}
 
         {/* Conteudo */}
-        <section className="mt-3 border-t border-neutral-200 pt-6">
-          <h2 className="text-lg font-semibold text-neutral-900">Artigos</h2>
+        <section className="mt-3 border-t border-neutral-800 pt-6">
+          <h2 className="text-lg font-semibold text-neutral-100">Artigos</h2>
           {artigos.length === 0 ? (
-            <p className="mt-2 text-sm text-neutral-600">Nenhum artigo publicado ainda neste cluster.</p>
+            <p className="mt-2 text-sm text-neutral-400">Nenhum artigo publicado ainda neste cluster.</p>
           ) : (
-            <div className="mt-4 grid grid-cols-1 gap-4 sm:grid-cols-2">
+            <div className="mt-4 grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
               {artigos.map((artigo) => (
                 <ArticleCard key={artigo.id} article={artigo} entitySlug={cluster.slug} />
               ))}

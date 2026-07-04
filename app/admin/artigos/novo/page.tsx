@@ -17,7 +17,7 @@ export default async function NovoArtigoPage({
   return (
     <div className="flex flex-col gap-6">
       <p className="text-sm font-medium uppercase tracking-wide text-neutral-500">CMS</p>
-      <h1 className="text-3xl font-bold leading-tight text-neutral-900">Novo artigo</h1>
+      <h1 className="text-3xl font-bold leading-tight text-neutral-100">Novo artigo</h1>
 
       <ArticleForm
         action={createArticleAction}

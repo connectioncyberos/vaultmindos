@@ -13,19 +13,20 @@ import { createClient } from "@/lib/supabase/server";
 export async function signInAction(formData: FormData) {
   const email = String(formData.get("email") ?? "").trim();
   const password = String(formData.get("password") ?? "");
+  const next = String(formData.get("next") ?? "") || "/admin";
 
   if (!email || !password) {
-    redirect("/login?error=Preencha e-mail e senha.");
+    redirect(`/login?error=Preencha e-mail e senha.&next=${encodeURIComponent(next)}`);
   }
 
   const supabase = createClient();
   const { error } = await supabase.auth.signInWithPassword({ email, password });
 
   if (error) {
-    redirect(`/login?error=${encodeURIComponent(error.message)}`);
+    redirect(`/login?error=${encodeURIComponent(error.message)}&next=${encodeURIComponent(next)}`);
   }
 
-  redirect("/admin");
+  redirect(next);
 }
 
 export async function signOutAction() {

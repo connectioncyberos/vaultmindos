@@ -5,21 +5,21 @@ export function Footer() {
   const ano = new Date().getFullYear();
 
   return (
-    <footer className="mt-12 border-t border-neutral-200 py-6">
+    <footer className="mt-12 border-t border-neutral-800 bg-neutral-950 py-6">
       <Container className="flex flex-wrap items-center justify-between gap-4 text-sm text-neutral-500">
         <p>
           © {ano} VaultMindOS — Sistema Operacional de Conhecimento.
         </p>
         <nav className="flex flex-wrap gap-4">
-          <Link href="/sobre" className="hover:text-neutral-900">
+          <Link href="/sobre" className="hover:text-emerald-400">
             Sobre
           </Link>
-          <Link href="/contato" className="hover:text-neutral-900">
+          <Link href="/contato" className="hover:text-emerald-400">
             Contato
           </Link>
           <a
             href="https://github.com/connectioncyberos/vaultmindos"
-            className="hover:text-neutral-900"
+            className="hover:text-emerald-400"
           >
             Repositório
           </a>

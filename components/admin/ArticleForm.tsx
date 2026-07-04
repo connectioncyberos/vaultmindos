@@ -41,40 +41,40 @@ export function ArticleForm({
       {initial && <input type="hidden" name="id" value={initial.id} />}
 
       {errorMessage && (
-        <p className="rounded-md border border-red-300 bg-red-50 p-3 text-sm text-red-900">
+        <p className="rounded-md border border-red-900/50 bg-red-950/40 p-3 text-sm text-red-200">
           {errorMessage}
         </p>
       )}
 
-      <label className="flex flex-col gap-1 text-sm text-neutral-700">
+      <label className="flex flex-col gap-1 text-sm text-neutral-300">
         Título
         <input
           type="text"
           name="title"
           required
           defaultValue={initial?.title}
-          className="rounded-md border border-neutral-300 px-3 py-2 text-sm text-neutral-900 focus:border-neutral-900 focus:outline-none"
+          className="rounded-md border border-neutral-700 bg-neutral-900 px-3 py-2 text-sm text-neutral-100 focus:border-emerald-500 focus:outline-none"
         />
       </label>
 
-      <label className="flex flex-col gap-1 text-sm text-neutral-700">
+      <label className="flex flex-col gap-1 text-sm text-neutral-300">
         Slug (opcional — gerado do título se deixar em branco)
         <input
           type="text"
           name="slug"
           defaultValue={initial?.slug}
           placeholder="gerado-automaticamente"
-          className="rounded-md border border-neutral-300 px-3 py-2 text-sm text-neutral-900 focus:border-neutral-900 focus:outline-none"
+          className="rounded-md border border-neutral-700 bg-neutral-900 px-3 py-2 text-sm text-neutral-100 focus:border-emerald-500 focus:outline-none"
         />
       </label>
 
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
-        <label className="flex flex-col gap-1 text-sm text-neutral-700">
+        <label className="flex flex-col gap-1 text-sm text-neutral-300">
           Tipo de conteúdo
           <select
             name="content_type"
             defaultValue={initial?.content_type ?? "artigo"}
-            className="rounded-md border border-neutral-300 px-3 py-2 text-sm text-neutral-900"
+            className="rounded-md border border-neutral-700 bg-neutral-900 px-3 py-2 text-sm text-neutral-100"
           >
             {CONTENT_TYPES.map((t) => (
               <option key={t.value} value={t.value}>
@@ -84,12 +84,12 @@ export function ArticleForm({
           </select>
         </label>
 
-        <label className="flex flex-col gap-1 text-sm text-neutral-700">
+        <label className="flex flex-col gap-1 text-sm text-neutral-300">
           Status
           <select
             name="status"
             defaultValue={initial?.status ?? "draft"}
-            className="rounded-md border border-neutral-300 px-3 py-2 text-sm text-neutral-900"
+            className="rounded-md border border-neutral-700 bg-neutral-900 px-3 py-2 text-sm text-neutral-100"
           >
             {STATUSES.map((s) => (
               <option key={s.value} value={s.value}>
@@ -99,12 +99,12 @@ export function ArticleForm({
           </select>
         </label>
 
-        <label className="flex flex-col gap-1 text-sm text-neutral-700">
+        <label className="flex flex-col gap-1 text-sm text-neutral-300">
           Domínio (categoria)
           <select
             name="category_id"
             defaultValue={initial?.category_id ?? ""}
-            className="rounded-md border border-neutral-300 px-3 py-2 text-sm text-neutral-900"
+            className="rounded-md border border-neutral-700 bg-neutral-900 px-3 py-2 text-sm text-neutral-100"
           >
             <option value="">— nenhum —</option>
             {categories.map((c) => (
@@ -116,39 +116,39 @@ export function ArticleForm({
         </label>
       </div>
 
-      <label className="flex flex-col gap-1 text-sm text-neutral-700">
+      <label className="flex flex-col gap-1 text-sm text-neutral-300">
         Resumo (excerpt)
         <textarea
           name="excerpt"
           rows={2}
           defaultValue={initial?.excerpt ?? ""}
-          className="rounded-md border border-neutral-300 px-3 py-2 text-sm text-neutral-900 focus:border-neutral-900 focus:outline-none"
+          className="rounded-md border border-neutral-700 bg-neutral-900 px-3 py-2 text-sm text-neutral-100 focus:border-emerald-500 focus:outline-none"
         />
       </label>
 
-      <label className="flex flex-col gap-1 text-sm text-neutral-700">
+      <label className="flex flex-col gap-1 text-sm text-neutral-300">
         Conteúdo
         <textarea
           name="content"
           rows={14}
           defaultValue={initial?.content ?? ""}
-          className="rounded-md border border-neutral-300 px-3 py-2 text-sm text-neutral-900 focus:border-neutral-900 focus:outline-none"
+          className="rounded-md border border-neutral-700 bg-neutral-900 px-3 py-2 text-sm text-neutral-100 focus:border-emerald-500 focus:outline-none"
         />
       </label>
 
-      <label className="flex flex-col gap-1 text-sm text-neutral-700">
+      <label className="flex flex-col gap-1 text-sm text-neutral-300">
         URL da imagem de capa (opcional)
         <input
           type="url"
           name="cover_image_url"
           defaultValue={initial?.cover_image_url ?? ""}
           placeholder="https://..."
-          className="rounded-md border border-neutral-300 px-3 py-2 text-sm text-neutral-900 focus:border-neutral-900 focus:outline-none"
+          className="rounded-md border border-neutral-700 bg-neutral-900 px-3 py-2 text-sm text-neutral-100 focus:border-emerald-500 focus:outline-none"
         />
       </label>
 
       {entities.length > 0 && (
-        <fieldset className="flex flex-col gap-2 text-sm text-neutral-700">
+        <fieldset className="flex flex-col gap-2 text-sm text-neutral-300">
           <legend className="mb-1 font-medium">Clusters (só relevante pra &ldquo;Artigo&rdquo;)</legend>
           <div className="flex flex-wrap gap-3">
             {entities.map((e) => (
@@ -167,7 +167,7 @@ export function ArticleForm({
       )}
 
       {tags.length > 0 && (
-        <fieldset className="flex flex-col gap-2 text-sm text-neutral-700">
+        <fieldset className="flex flex-col gap-2 text-sm text-neutral-300">
           <legend className="mb-1 font-medium">Tags</legend>
           <div className="flex flex-wrap gap-3">
             {tags.map((t) => (
@@ -185,31 +185,31 @@ export function ArticleForm({
         </fieldset>
       )}
 
-      <fieldset className="flex flex-col gap-3 rounded-md border border-neutral-200 p-4">
-        <legend className="px-1 text-sm font-medium text-neutral-700">SEO</legend>
-        <label className="flex flex-col gap-1 text-sm text-neutral-700">
+      <fieldset className="flex flex-col gap-3 rounded-md border border-neutral-800 p-4">
+        <legend className="px-1 text-sm font-medium text-neutral-300">SEO</legend>
+        <label className="flex flex-col gap-1 text-sm text-neutral-300">
           SEO title
           <input
             type="text"
             name="seo_title"
             defaultValue={initial?.seo_title ?? ""}
-            className="rounded-md border border-neutral-300 px-3 py-2 text-sm text-neutral-900 focus:border-neutral-900 focus:outline-none"
+            className="rounded-md border border-neutral-700 bg-neutral-900 px-3 py-2 text-sm text-neutral-100 focus:border-emerald-500 focus:outline-none"
           />
         </label>
-        <label className="flex flex-col gap-1 text-sm text-neutral-700">
+        <label className="flex flex-col gap-1 text-sm text-neutral-300">
           SEO description
           <textarea
             name="seo_description"
             rows={2}
             defaultValue={initial?.seo_description ?? ""}
-            className="rounded-md border border-neutral-300 px-3 py-2 text-sm text-neutral-900 focus:border-neutral-900 focus:outline-none"
+            className="rounded-md border border-neutral-700 bg-neutral-900 px-3 py-2 text-sm text-neutral-100 focus:border-emerald-500 focus:outline-none"
           />
         </label>
       </fieldset>
 
       <button
         type="submit"
-        className="w-fit rounded-md bg-neutral-900 px-4 py-2 text-sm font-medium text-white"
+        className="w-fit rounded-md bg-emerald-600 px-4 py-2 text-sm font-medium text-white hover:bg-emerald-500"
       >
         {initial ? "Salvar alterações" : "Criar artigo"}
       </button>

@@ -11,7 +11,7 @@ function BotaoInscrever() {
     <button
       type="submit"
       disabled={pending}
-      className="w-fit rounded-md bg-neutral-900 px-4 py-2 text-sm font-medium text-white disabled:opacity-50"
+      className="w-fit rounded-md bg-emerald-600 px-4 py-2 text-sm font-medium text-white hover:bg-emerald-500 disabled:opacity-50"
     >
       {pending ? "Enviando..." : "Inscrever"}
     </button>
@@ -29,9 +29,9 @@ export function NewsletterBox() {
   const [state, formAction] = useFormState(subscribeAction, INITIAL_STATE);
 
   return (
-    <section className="mt-3 rounded-md border border-neutral-200 bg-neutral-50 p-4">
-      <h2 className="text-base font-semibold text-neutral-900">Receba novidades</h2>
-      <p className="mt-1 text-sm text-neutral-600">
+    <section className="mt-3 rounded-md border border-neutral-800 bg-neutral-900 p-4">
+      <h2 className="text-base font-semibold text-neutral-100">Receba novidades</h2>
+      <p className="mt-1 text-sm text-neutral-400">
         Artigos novos do VaultMindOS direto no seu e-mail, sem spam.
       </p>
 
@@ -41,7 +41,7 @@ export function NewsletterBox() {
           name="email"
           required
           placeholder="seu@email.com"
-          className="min-w-[220px] flex-1 rounded-md border border-neutral-300 px-3 py-2 text-sm text-neutral-900 focus:border-neutral-900 focus:outline-none"
+          className="min-w-[220px] flex-1 rounded-md border border-neutral-700 bg-neutral-950 px-3 py-2 text-sm text-neutral-100 focus:border-emerald-500 focus:outline-none"
         />
         <BotaoInscrever />
       </form>
@@ -49,7 +49,7 @@ export function NewsletterBox() {
       {state.status !== "idle" && (
         <p
           className={`mt-2 text-sm ${
-            state.status === "success" ? "text-green-700" : "text-red-700"
+            state.status === "success" ? "text-emerald-400" : "text-red-400"
           }`}
         >
           {state.message}

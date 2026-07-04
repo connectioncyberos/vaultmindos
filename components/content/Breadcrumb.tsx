@@ -17,11 +17,11 @@ export function Breadcrumb({ items }: { items: BreadcrumbItem[] }) {
           return (
             <li key={`${item.label}-${i}`} className="flex items-center gap-1">
               {item.href && !isLast ? (
-                <Link href={item.href} className="hover:text-neutral-900">
+                <Link href={item.href} className="hover:text-emerald-400">
                   {item.label}
                 </Link>
               ) : (
-                <span className={isLast ? "text-neutral-700" : ""}>{item.label}</span>
+                <span className={isLast ? "text-neutral-300" : ""}>{item.label}</span>
               )}
               {!isLast && <span>/</span>}
             </li>

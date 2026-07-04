@@ -20,7 +20,7 @@ export function ArticleCard({
   return (
     <Link
       href={href}
-      className="block rounded-md border border-neutral-200 p-4 hover:border-neutral-400"
+      className="block rounded-md border border-neutral-800 bg-neutral-900 p-4 hover:border-emerald-500/50"
     >
       <div className="flex items-center gap-2 text-xs uppercase tracking-wide text-neutral-500">
         <span>{CONTENT_TYPE_LABELS[article.content_type]}</span>
@@ -31,9 +31,9 @@ export function ArticleCard({
           </>
         )}
       </div>
-      <h3 className="mt-2 text-lg font-semibold text-neutral-900">{article.title}</h3>
+      <h3 className="mt-2 text-lg font-semibold text-neutral-100">{article.title}</h3>
       {article.excerpt && (
-        <p className="mt-1 text-sm leading-relaxed text-neutral-600">{article.excerpt}</p>
+        <p className="mt-1 text-sm leading-relaxed text-neutral-400">{article.excerpt}</p>
       )}
     </Link>
   );

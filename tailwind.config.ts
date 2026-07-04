@@ -25,17 +25,18 @@ const config: Config = {
     spacing: spacingScale,
     extend: {
       colors: {
-        // TODO(design): paleta de marca ainda nao definida no Visual
-        // Language v1.0 (o documento nomeia "Cor" como pilar, sem hex).
-        // Tokens semanticos de estado ja preparados (secao 19 do
-        // Visual Language: Normal/Hover/Focus/Active/Disabled/Loading/
-        // Success/Warning/Error/Empty) — mapear para hex quando a
-        // paleta oficial for definida.
+        // Enterprise Emerald — paleta de marca oficial do VaultMindOS
+        // (docs/blueprint/vaultmindos-academy-architecture-v1.md e
+        // docs/blueprint/origem-do-projeto-v1.md). Usa as escalas
+        // nativas do Tailwind (neutral-950/emerald-500/600) como base
+        // de fundo/marca — sem tokens customizados pra isso, ja que os
+        // valores documentados batem exatamente com o padrao do
+        // Tailwind. Tokens semanticos de estado alinhados a marca:
         state: {
-          success: "#16a34a",
+          success: "#10b981",
           warning: "#d97706",
-          error: "#dc2626",
-          info: "#2563eb",
+          error: "#ef4444",
+          info: "#3b82f6",
         },
       },
     },
