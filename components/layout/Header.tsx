@@ -48,6 +48,9 @@ export async function Header() {
           <Link href="/academy" className="hover:text-emerald-400">
             Academy
           </Link>
+          <Link href="/empresas" className="hover:text-emerald-400">
+            Empresas
+          </Link>
           <Link
             href="/login"
             className="rounded-md border border-neutral-700 px-3 py-1.5 font-medium text-neutral-100 hover:border-emerald-500 hover:text-emerald-400"

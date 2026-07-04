@@ -6,6 +6,8 @@
 
 export type CompetencyKind = "TECNICA" | "COMPORTAMENTAL" | "OPERACIONAL" | "DIGITAL";
 export type EnrollmentStatus = "ACTIVE" | "COMPLETED" | "CANCELLED";
+export type OrganizationStatus = "PENDING" | "APPROVED" | "REJECTED";
+export type OrganizationMemberRole = "MEMBER" | "RESPONSAVEL_RH" | "GESTOR_AREA" | "ALUNO_PATROCINADO";
 
 export interface Sector {
   id: string;
@@ -82,4 +84,25 @@ export interface EnrollmentWithCourse extends Enrollment {
 
 export interface CertificateWithCourse extends Certificate {
   course: Course;
+}
+
+/** Empresa parceira (Fase 2 — auto-cadastro com aprovação do admin). */
+export interface Organization {
+  id: string;
+  name: string;
+  cnpj: string | null;
+  sector: string | null;
+  status: OrganizationStatus;
+  requested_by: string | null;
+  reviewed_by: string | null;
+  reviewed_at: string | null;
+  created_at: string;
+}
+
+export interface OrganizationMember {
+  id: string;
+  organization_id: string;
+  user_id: string;
+  role: OrganizationMemberRole;
+  created_at: string;
 }

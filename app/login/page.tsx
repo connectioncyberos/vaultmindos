@@ -1,3 +1,4 @@
+import Link from "next/link";
 import { signInAction } from "./actions";
 
 /**
@@ -13,10 +14,10 @@ import { signInAction } from "./actions";
  * entre VaultMindOS/AutoZap/CyberTreina ainda nao foi construido —
  * so pegamos o padrao visual daqui.
  *
- * Criacao de usuario: nao ha /signup publico neste MVP. O primeiro
- * usuario (admin) e criado pelo fundador direto no Supabase Dashboard
- * (Authentication -> Users -> Add user) — ver checklist de validacao
- * do Modulo 5.
+ * Criacao de usuario (Fase 2): agora existe /signup publico e
+ * self-service (decisao do fundador). O fluxo manual via Supabase
+ * Dashboard continua valido pra promover alguem a admin/editor/author,
+ * mas deixou de ser a unica porta de entrada.
  *
  * Autofill em dev: gated por NODE_ENV !== "production" (o mesmo padrao
  * aplicado no login do igrejas-web-system-os). Diferenca proposital:
@@ -109,6 +110,16 @@ export default function LoginPage({
           />
         </svg>
         Conexão segura via Supabase Auth
+      </p>
+
+      <p className="text-sm text-neutral-400">
+        Não tem conta?{" "}
+        <Link
+          href={`/signup?next=${encodeURIComponent(next)}`}
+          className="text-emerald-400 underline hover:text-emerald-300"
+        >
+          Criar conta
+        </Link>
       </p>
 
       {/* Rodape minimo — sem nav, so credito */}

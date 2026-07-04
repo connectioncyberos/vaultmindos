@@ -8,6 +8,8 @@ import type {
   EnrollmentWithCourse,
   Lesson,
   ModuleWithLessons,
+  Organization,
+  OrganizationMember,
   Sector,
 } from "@/lib/types/academy";
 
@@ -289,4 +291,48 @@ export async function getCertificateForCourse(userId: string, courseId: string):
     .eq("course_id", courseId)
     .maybeSingle();
   return data as Certificate | null;
+}
+
+/**
+ * Empresa parceira (Fase 2). Um usuário pertence no máximo a uma
+ * organização nesta fase (o form de cadastro assume isso) — busca a
+ * primeira membership e a organização correspondente.
+ */
+export async function getOrganizationForUser(
+  userId: string,
+): Promise<{ organization: Organization; membership: OrganizationMember } | null> {
+  const supabase = createClient();
+  const { data: membershipRow } = await supabase
+    .from("organization_members")
+    .select("id, organization_id, user_id, role, created_at")
+    .eq("user_id", userId)
+    .maybeSingle();
+
+  if (!membershipRow) return null;
+
+  const { data: orgRow } = await supabase
+    .from("organizations")
+    .select("id, name, cnpj, sector, status, requested_by, reviewed_by, reviewed_at, created_at")
+    .eq("id", membershipRow.organization_id as string)
+    .maybeSingle();
+
+  if (!orgRow) return null;
+
+  return {
+    organization: orgRow as Organization,
+    membership: membershipRow as OrganizationMember,
+  };
+}
+
+/** Fila de aprovação (admin) — organizações por status, mais recentes primeiro. */
+export async function getOrganizationsByStatus(
+  status: "PENDING" | "APPROVED" | "REJECTED",
+): Promise<Organization[]> {
+  const supabase = createClient();
+  const { data } = await supabase
+    .from("organizations")
+    .select("id, name, cnpj, sector, status, requested_by, reviewed_by, reviewed_at, created_at")
+    .eq("status", status)
+    .order("created_at", { ascending: false });
+  return (data ?? []) as Organization[];
 }

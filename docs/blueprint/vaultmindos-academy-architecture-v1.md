@@ -232,3 +232,26 @@ O banco já nasce pronto para o escopo completo (B2B + multi-tenant), mas a entr
 - Pagamento/assinatura (monetização) — fica para depois da Fase 1 validada.
 - Demais setores do plano original (Redes, Suporte, Elétrica, Fiscal) — entram um de cada vez após o piloto.
 - Qualquer upgrade de stack (o `vaultmindos` está em Next 14/React 18/Tailwind 3; `portal-teologico-os` e `igrejas-web-system-os` já estão em Next 16/React 19/Tailwind 4) — não faz parte desta arquitetura, é uma decisão separada a avaliar depois.
+
+## 9. Fase 2 — kickoff (decisões do fundador, 2026-07-04)
+
+Ao decidir avançar de "cadastro manual/piloto" para "cadastro real", três decisões foram tomadas:
+
+- **Cadastro de aluno:** abrir `/signup` público e self-service (Supabase Auth com confirmação de
+  e-mail), reaproveitando o trigger `handle_new_user` já existente. Login manual via Dashboard
+  continua existindo só para promover alguém a admin/editor/author.
+- **Cadastro de empresa parceira:** auto-cadastro em `/empresas/cadastro` com aprovação manual do
+  admin em `/admin/academy/empresas` (migration `003_organizations_self_service.sql` adiciona
+  `status`/`requested_by`/`reviewed_by`/`reviewed_at` em `organizations` e troca a policy única
+  admin-only por policies granulares: insert self-service forçando `status = 'PENDING'`,
+  update/delete só admin).
+- **Monetização:** continua fora de escopo — cadastro e matrícula (individual ou patrocinada) seguem
+  gratuitos até a Fase 1/2 estarem validadas com uso real.
+
+Ainda não construído nesta rodada (próximo passo natural da Fase 2): tela de convite/matrícula
+patrocinada dentro de `/empresas` (hoje uma empresa aprovada só vê status "Aprovada", sem ainda
+poder convidar colaboradores) e o relatório de progresso da equipe para o RH.
+
+Termos de Uso (`/termos`) e Política de Privacidade (`/privacidade`) publicados como rascunho para
+destravar o checkbox de aceite do LGPD nos cadastros — **texto genérico, não revisado por advogado**;
+recomenda-se revisão jurídica antes de operar com usuários reais em produção.
