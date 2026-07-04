@@ -8,18 +8,38 @@ import {
   getUserProgressForLessons,
   getCertificateForCourse,
 } from "@/lib/academy/queries";
-import { enrollAction } from "../../actions";
+import { reconcilePayment } from "@/lib/payments/grant";
+import { enrollAction, createCheckoutAction } from "../../actions";
 
-/** Detalhe do curso: módulos/aulas, matrícula e progresso (Fase 1). */
+const BRL = new Intl.NumberFormat("pt-BR", { style: "currency", currency: "BRL" });
+
+/** Detalhe do curso: módulos/aulas, matrícula, progresso e checkout (cursos pagos). */
 export default async function CursoPage({
   params,
+  searchParams,
 }: {
   params: { cursoSlug: string };
+  searchParams: { payment_id?: string; checkout?: string; checkout_error?: string };
 }) {
   const user = (await getCurrentUser())!;
 
   const course = await getCourseBySlug(params.cursoSlug);
   if (!course || !course.is_active) notFound();
+
+  // Retorno do checkout (Mercado Pago acrescenta `payment_id` na URL de
+  // sucesso automaticamente) — reconcilia AQUI, antes de buscar a
+  // matrícula abaixo, pra já refletir o pagamento recém-aprovado nesta
+  // mesma renderização. `reconcilePayment` reconsulta o status real na
+  // API do Mercado Pago, nunca confia só no retorno da URL.
+  let paymentJustReconciled: string | null = null;
+  if (searchParams?.payment_id) {
+    try {
+      const result = await reconcilePayment(searchParams.payment_id);
+      paymentJustReconciled = result.status;
+    } catch (err) {
+      console.error("Erro ao confirmar pagamento no retorno do checkout:", err);
+    }
+  }
 
   const [content, enrollment, certificate] = await Promise.all([
     getCourseWithContent(course.id),
@@ -27,6 +47,8 @@ export default async function CursoPage({
     getCertificateForCourse(user.id, course.id),
   ]);
   if (!content) notFound();
+
+  const isPaidCourse = !!course.price_cents && course.price_cents > 0;
 
   const allLessonIds = content.modules.flatMap((m) => m.lessons.map((l) => l.id));
   const progressMap = enrollment
@@ -49,19 +71,63 @@ export default async function CursoPage({
         {course.description && (
           <p className="text-base leading-relaxed text-neutral-400">{course.description}</p>
         )}
+        {isPaidCourse && !enrollment && (
+          <p className="text-lg font-semibold text-emerald-400">{BRL.format(course.price_cents! / 100)}</p>
+        )}
       </div>
 
+      {paymentJustReconciled === "APPROVED" && enrollment && (
+        <p className="rounded-md border border-emerald-800 bg-emerald-950/30 p-3 text-sm text-emerald-300">
+          Pagamento aprovado — acesso liberado!
+        </p>
+      )}
+      {paymentJustReconciled && paymentJustReconciled !== "APPROVED" && !enrollment && (
+        <p className="rounded-md border border-amber-900/50 bg-amber-950/20 p-3 text-sm text-amber-200">
+          Pagamento em processamento. Assim que for aprovado (pode levar alguns minutos em boleto/Pix
+          pendente), o acesso é liberado automaticamente — recarregue esta página pra checar.
+        </p>
+      )}
+      {searchParams?.checkout === "falhou" && (
+        <p className="rounded-md border border-red-900/50 bg-red-950/40 p-3 text-sm text-red-200">
+          Pagamento não aprovado. Você pode tentar de novo.
+        </p>
+      )}
+      {searchParams?.checkout === "pendente" && (
+        <p className="rounded-md border border-amber-900/50 bg-amber-950/20 p-3 text-sm text-amber-200">
+          Pagamento pendente de confirmação. O acesso é liberado automaticamente assim que for
+          aprovado.
+        </p>
+      )}
+      {searchParams?.checkout_error && (
+        <p className="rounded-md border border-red-900/50 bg-red-950/40 p-3 text-sm text-red-200">
+          {searchParams.checkout_error}
+        </p>
+      )}
+
       {!enrollment ? (
-        <form action={enrollAction}>
-          <input type="hidden" name="course_id" value={course.id} />
-          <input type="hidden" name="course_slug" value={course.slug} />
-          <button
-            type="submit"
-            className="w-fit rounded-md bg-emerald-600 px-4 py-2 text-sm font-medium text-white hover:bg-emerald-500"
-          >
-            Matricular-se
-          </button>
-        </form>
+        isPaidCourse ? (
+          <form action={createCheckoutAction}>
+            <input type="hidden" name="course_id" value={course.id} />
+            <input type="hidden" name="course_slug" value={course.slug} />
+            <button
+              type="submit"
+              className="w-fit rounded-md bg-emerald-600 px-4 py-2 text-sm font-medium text-white hover:bg-emerald-500"
+            >
+              Comprar acesso — {BRL.format(course.price_cents! / 100)}
+            </button>
+          </form>
+        ) : (
+          <form action={enrollAction}>
+            <input type="hidden" name="course_id" value={course.id} />
+            <input type="hidden" name="course_slug" value={course.slug} />
+            <button
+              type="submit"
+              className="w-fit rounded-md bg-emerald-600 px-4 py-2 text-sm font-medium text-white hover:bg-emerald-500"
+            >
+              Matricular-se
+            </button>
+          </form>
+        )
       ) : (
         <div className="rounded-md border border-neutral-800 bg-neutral-900 p-4">
           <div className="h-2 w-full overflow-hidden rounded-full bg-neutral-800">
@@ -122,7 +188,9 @@ export default async function CursoPage({
                         Assistir →
                       </Link>
                     ) : (
-                      <span className="text-sm text-neutral-600">Matricule-se para assistir</span>
+                      <span className="text-sm text-neutral-600">
+                        {isPaidCourse ? "Compre o curso para assistir" : "Matricule-se para assistir"}
+                      </span>
                     )}
                   </li>
                 );

@@ -25,6 +25,8 @@ export interface Course {
   description: string | null;
   level: string | null;
   is_active: boolean;
+  /** null ou 0 = gratuito. Em centavos (R$ 97,00 = 9700). */
+  price_cents: number | null;
 }
 
 export interface CourseModule {

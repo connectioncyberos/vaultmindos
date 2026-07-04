@@ -39,6 +39,10 @@ create index if not exists idx_organizations_status on organizations(status);
 -- ------------------------------------------------------------
 drop policy if exists "org_write_admin" on organizations;
 drop policy if exists "org_select_member_or_admin" on organizations;
+drop policy if exists "org_select_member_or_admin_or_requester" on organizations;
+drop policy if exists "org_insert_self_service" on organizations;
+drop policy if exists "org_update_admin_only" on organizations;
+drop policy if exists "org_delete_admin_only" on organizations;
 
 create policy "org_select_member_or_admin_or_requester" on organizations for select
   using (is_org_member(id) or is_admin() or requested_by = auth.uid());
@@ -64,6 +68,9 @@ create policy "org_delete_admin_only" on organizations for delete
 --    é decisão administrativa, não self-service).
 -- ------------------------------------------------------------
 drop policy if exists "org_members_write_admin" on organization_members;
+drop policy if exists "org_members_insert_self_or_admin" on organization_members;
+drop policy if exists "org_members_update_admin_only" on organization_members;
+drop policy if exists "org_members_delete_admin_only" on organization_members;
 
 create policy "org_members_insert_self_or_admin" on organization_members for insert
   with check (user_id = auth.uid() or is_admin());

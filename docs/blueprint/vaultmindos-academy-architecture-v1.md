@@ -311,3 +311,81 @@ cadastro). Duas coisas foram feitas em código por causa disso:
    (via trigger `handle_new_user`).
 7. Repetir o mesmo teste end-to-end para `/empresas/cadastro` (cadastrar uma empresa, aprovar em
    `/admin/academy/empresas` como admin, conferir que `/empresas` reflete o status "Aprovada").
+
+## 11. Internacionalização (i18n) — decisão adiada (2026-07-04)
+
+Avaliado e **adiado de propósito**, não esquecido. Motivo: i18n não é só trocar strings de
+interface — significa reestruturar rotas por locale (`/pt-BR/...` vs `/en/...`), traduzir
+manualmente todo o conteúdo que hoje vive no banco (artigos, cursos, aulas — conteúdo editorial,
+não string fixa), cuidar de SEO por idioma (hreflang, sitemap por locale) e manter tudo isso em dobro
+a cada mudança futura. Hoje 100% do público-alvo, do conteúdo publicado e da Academy é voltado ao
+mercado brasileiro — não há ainda demanda concreta (cliente, parceiro ou expansão de mercado) que
+justifique esse investimento.
+
+**Decisão:** manter o site 100% em PT-BR hardcoded até surgir uma demanda real e específica. Quando
+isso acontecer, revisitar esta seção para planejar a abordagem (provável candidato: `next-intl` com
+roteamento por locale) antes de implementar.
+
+## 12. Gate de pagamento — Mercado Pago Checkout Pro (2026-07-04)
+
+Decisão do fundador: cobrar só o curso piloto (Administrativo 4.0); Nivelamento continua gratuito
+como porta de entrada. Checkout Pro (página hospedada do Mercado Pago) em vez de formulário embutido
+— mais rápido de validar, sem lidar com dado de cartão no nosso servidor.
+
+**O que foi construído:**
+- `sql/migrations/004_course_payments.sql` — `courses.price_cents` (null/0 = gratuito) e a tabela
+  `payments` (PENDING/APPROVED/REJECTED/CANCELLED), RLS: usuário só vê/insere os próprios; só o
+  webhook/confirmação server-only (service role, `lib/supabase/service.ts`) atualiza o status.
+- `services/mercadopago/client.ts` — fetch direto na API (sem SDK, mesmo padrão do Resend):
+  `createPreference` (cria a cobrança) e `getPayment` (reconsulta o status real — nunca confiamos
+  isoladamente no payload do webhook nem nos query params do redirect de retorno).
+- `lib/payments/grant.ts` — `reconcilePayment`: busca o status real no Mercado Pago e, se aprovado,
+  libera a matrícula (idempotente — seguro rodar mais de uma vez pro mesmo pagamento).
+- `app/academy/actions.ts` — `createCheckoutAction` (cria a preferência e redireciona pro checkout)
+  e `confirmPaymentAction`; `enrollAction` passou a recusar matrícula direta de curso pago (a
+  Server Action é chamada, então esconder o botão na UI não bastaria como única defesa).
+- `app/api/webhooks/mercadopago/route.ts` — recebe a notificação e chama `reconcilePayment`.
+- A página do curso (`app/academy/cursos/[cursoSlug]/page.tsx`) reconcilia automaticamente quando o
+  Mercado Pago redireciona de volta com `?payment_id=...` — funciona mesmo sem o webhook alcançar o
+  servidor (útil rodando em `localhost`, onde o Mercado Pago não consegue chamar o webhook).
+
+### Passo a passo — configurar (Painel de Desenvolvedores do Mercado Pago)
+
+1. Acessar [mercadopago.com.br/developers/panel](https://www.mercadopago.com.br/developers/panel),
+   criar/abrir uma Aplicação.
+2. Em **Credenciais de teste**, copiar o **Access Token de teste** → colar em `MERCADOPAGO_ACCESS_TOKEN`
+   no `.env.local`. Nada de dinheiro real se move com essa credencial.
+3. Ajustar o preço real do curso piloto (o `9700` — R$ 97,00 — na migration é só um placeholder):
+   ```sql
+   update courses set price_cents = <valor em centavos> where slug = 'administrativo-4-0';
+   ```
+4. Confirmar que `SUPABASE_SERVICE_ROLE_KEY` está preenchida no `.env.local` (necessária pro
+   webhook/confirmação — `lib/supabase/service.ts`).
+
+### Passo a passo — teste de recebimento (sandbox, sem dinheiro real)
+
+1. Em **Contas de teste** no Painel de Desenvolvedores, criar um usuário de teste **comprador**
+   (país Brasil) — ele vem com e-mail/senha fictícios; você não compra de você mesmo com a mesma
+   conta que gerou o Access Token (que atua como vendedor).
+2. Pegar os **cartões de teste** atualizados direto na
+   [documentação oficial](https://www.mercadopago.com.br/developers/pt/docs/checkout-pro/additional-content/test-cards)
+   (os números mudam periodicamente — não vale copiar de uma lista antiga).
+3. No app, logado com sua própria conta VaultMindOS, ir em `/academy/cursos/administrativo-4-0` e
+   clicar **Comprar acesso**.
+4. Na página do Mercado Pago, logar com o **usuário de teste comprador** (não com sua conta real do
+   Mercado Pago) e pagar com um cartão de teste.
+5. Confirmar o redirecionamento de volta pro curso com a mensagem "Pagamento aprovado — acesso
+   liberado!" e que as aulas ficaram acessíveis.
+6. Conferir no Supabase (`select * from payments order by created_at desc`) que a linha ficou
+   `APPROVED` com `mp_payment_id` preenchido, e que `enrollments` tem a matrícula correspondente.
+7. Testar também um cartão de teste de **recusa**, pra conferir a mensagem "Pagamento não aprovado".
+8. Só depois de validar os passos acima, trocar `MERCADOPAGO_ACCESS_TOKEN` pela credencial de
+   **produção** (mesma tela do Painel) — a partir daí pagamentos reais passam a valer, e vincular a
+   conta bancária de recebimento no Mercado Pago é uma ação que só o fundador faz (dado financeiro
+   de conta, fora do que a IA pode configurar).
+
+### Fora de escopo por enquanto
+- Reembolso/estorno pela plataforma (hoje seria feito direto no painel do Mercado Pago, manualmente).
+- Cobrança recorrente/assinatura — o modelo atual é pagamento único por curso.
+- Split de pagamento pra empresa parceira (Fase 2 B2B) — matrícula patrocinada continua gratuita por
+  enquanto (ver seção 9).

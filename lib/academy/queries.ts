@@ -41,6 +41,7 @@ function mapCourse(row: unknown): Course {
     description: (r.description as string | null) ?? null,
     level: (r.level as string | null) ?? null,
     is_active: r.is_active as boolean,
+    price_cents: (r.price_cents as number | null) ?? null,
   };
 }
 
@@ -84,7 +85,7 @@ export async function getCoursesBySector(sectorId: string): Promise<Course[]> {
   const supabase = createClient();
   const { data } = await supabase
     .from("courses")
-    .select("id, sector_id, slug, title, description, level, is_active")
+    .select("id, sector_id, slug, title, description, level, is_active, price_cents")
     .eq("sector_id", sectorId)
     .eq("is_active", true)
     .order("title", { ascending: true });
@@ -96,7 +97,7 @@ export async function getNivelamentoCourse(): Promise<Course | null> {
   const supabase = createClient();
   const { data } = await supabase
     .from("courses")
-    .select("id, sector_id, slug, title, description, level, is_active")
+    .select("id, sector_id, slug, title, description, level, is_active, price_cents")
     .eq("slug", "nivelamento")
     .maybeSingle();
   return data ? mapCourse(data) : null;
@@ -106,7 +107,7 @@ export async function getCourseBySlug(slug: string): Promise<Course | null> {
   const supabase = createClient();
   const { data } = await supabase
     .from("courses")
-    .select("id, sector_id, slug, title, description, level, is_active")
+    .select("id, sector_id, slug, title, description, level, is_active, price_cents")
     .eq("slug", slug)
     .maybeSingle();
   return data ? mapCourse(data) : null;
@@ -118,7 +119,7 @@ export async function getCourseWithContent(courseId: string): Promise<CourseWith
 
   const { data: courseRow } = await supabase
     .from("courses")
-    .select("id, sector_id, slug, title, description, level, is_active")
+    .select("id, sector_id, slug, title, description, level, is_active, price_cents")
     .eq("id", courseId)
     .maybeSingle();
   if (!courseRow) return null;
@@ -198,7 +199,7 @@ export async function getUserEnrollments(userId: string): Promise<EnrollmentWith
   const courseIds = rows.map((r) => r.course_id as string);
   const { data: courseRows } = await supabase
     .from("courses")
-    .select("id, sector_id, slug, title, description, level, is_active")
+    .select("id, sector_id, slug, title, description, level, is_active, price_cents")
     .in("id", courseIds);
 
   const courseById = new Map<string, Course>();
@@ -268,7 +269,7 @@ export async function getUserCertificates(userId: string): Promise<CertificateWi
   const courseIds = rows.map((r) => r.course_id);
   const { data: courseRows } = await supabase
     .from("courses")
-    .select("id, sector_id, slug, title, description, level, is_active")
+    .select("id, sector_id, slug, title, description, level, is_active, price_cents")
     .in("id", courseIds);
 
   const courseById = new Map<string, Course>();
