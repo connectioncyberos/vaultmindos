@@ -10,7 +10,7 @@ export type BreadcrumbItem = { label: string; href?: string };
  */
 export function Breadcrumb({ items }: { items: BreadcrumbItem[] }) {
   return (
-    <nav aria-label="breadcrumb" className="text-xs text-neutral-500">
+    <nav aria-label="breadcrumb" className="text-lg text-neutral-500">
       <ol className="flex flex-wrap items-center gap-1">
         {items.map((item, i) => {
           const isLast = i === items.length - 1;

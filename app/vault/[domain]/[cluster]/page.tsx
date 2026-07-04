@@ -53,11 +53,6 @@ export default async function ClusterPage({
           ]}
         />
 
-        {/* Contexto */}
-        <p className="text-sm font-medium uppercase tracking-wide text-neutral-500">
-          {categoria.name} · Cluster
-        </p>
-
         {/* Titulo Principal */}
         <h1 className="text-3xl font-bold leading-tight text-neutral-100">{cluster.name}</h1>
 

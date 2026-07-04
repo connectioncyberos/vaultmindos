@@ -3,6 +3,7 @@
 import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import { SITE_URL } from "@/lib/seo/metadata";
+import { translateAuthError } from "@/lib/auth/error-messages";
 
 /**
  * Server Action de cadastro público (Fase 2 — decisão do fundador:
@@ -52,10 +53,7 @@ export async function signUpAction(formData: FormData) {
   });
 
   if (error) {
-    const msg =
-      error.message.includes("already registered") || error.code === "user_already_exists"
-        ? "Já existe uma conta com esse e-mail. Tente entrar."
-        : error.message;
+    const msg = translateAuthError(error.message, error.code);
     redirect(`/signup?error=${encodeURIComponent(msg)}&next=${encodeURIComponent(next)}`);
   }
 

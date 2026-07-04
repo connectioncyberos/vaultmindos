@@ -2,6 +2,7 @@
 
 import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
+import { translateAuthError } from "@/lib/auth/error-messages";
 
 /**
  * Server Actions do login (Modulo 5). Rodam no servidor, usando o
@@ -23,7 +24,8 @@ export async function signInAction(formData: FormData) {
   const { error } = await supabase.auth.signInWithPassword({ email, password });
 
   if (error) {
-    redirect(`/login?error=${encodeURIComponent(error.message)}&next=${encodeURIComponent(next)}`);
+    const msg = translateAuthError(error.message, error.code);
+    redirect(`/login?error=${encodeURIComponent(msg)}&next=${encodeURIComponent(next)}`);
   }
 
   redirect(next);

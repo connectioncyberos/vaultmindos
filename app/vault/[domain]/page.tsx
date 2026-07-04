@@ -46,9 +46,6 @@ export default async function DomainPage({
       <Container wide className="flex flex-col gap-6 py-6">
         <Breadcrumb items={[{ label: "Início", href: "/" }, { label: categoria.name }]} />
 
-        {/* Contexto */}
-        <p className="text-sm font-medium uppercase tracking-wide text-neutral-500">Domínio</p>
-
         {/* Titulo Principal */}
         <h1 className="text-3xl font-bold leading-tight text-neutral-100">{categoria.name}</h1>
 

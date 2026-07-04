@@ -16,7 +16,7 @@ export default function SignupPage({
   const next = searchParams?.next || "/academy";
 
   return (
-    <div className="flex min-h-screen flex-col items-center justify-center gap-8 px-4 py-12">
+    <div className="flex min-h-screen flex-col items-center justify-center gap-6 px-4 py-12">
       <div className="flex w-full max-w-sm flex-col items-center gap-3 text-center">
         {/* eslint-disable-next-line @next/next/no-img-element */}
         <img src="/logo.png" alt="VaultMindOS" className="h-10 w-auto object-contain" />
@@ -100,7 +100,7 @@ export default function SignupPage({
 
           <button
             type="submit"
-            className="mt-2 w-full rounded-md bg-emerald-600 px-4 py-2.5 text-sm font-medium text-white hover:bg-emerald-500"
+            className="mt-2 w-full rounded-md bg-emerald-600 px-3 py-2 text-sm font-medium text-white hover:bg-emerald-500"
           >
             Criar conta
           </button>

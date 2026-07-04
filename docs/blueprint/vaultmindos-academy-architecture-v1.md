@@ -255,3 +255,59 @@ poder convidar colaboradores) e o relatório de progresso da equipe para o RH.
 Termos de Uso (`/termos`) e Política de Privacidade (`/privacidade`) publicados como rascunho para
 destravar o checkbox de aceite do LGPD nos cadastros — **texto genérico, não revisado por advogado**;
 recomenda-se revisão jurídica antes de operar com usuários reais em produção.
+
+## 10. Checklist de validação — cadastro real (SMTP + testes)
+
+Ao testar `/signup` com e-mail real pela primeira vez apareceu o erro padrão do Supabase Auth "For
+security purposes, you can only request this after N seconds" — **não é bug**, é o limitador
+anti-abuso do serviço de e-mail embutido do Supabase (pensado só para teste, não para volume real de
+cadastro). Duas coisas foram feitas em código por causa disso:
+
+- `lib/auth/error-messages.ts` — traduz esse e outros erros comuns do Supabase Auth (credenciais
+  inválidas, e-mail não confirmado, e-mail já cadastrado, etc.) para PT-BR antes de mostrar em
+  `/login` e `/signup`. Importante: isso só traduz as mensagens que aparecem **na tela**; o texto do
+  **e-mail de confirmação em si** é outra coisa (ver abaixo).
+- Antes de operar com cadastro real de verdade, o passo que resolve o limite (e melhora a entrega do
+  e-mail) é configurar SMTP customizado no Supabase usando o Resend que o projeto já usa (Módulo 9).
+
+### Passo a passo — SMTP customizado (Resend → Supabase)
+
+1. No [Resend](https://resend.com) (Dashboard → Domains → Add Domain), cadastrar o domínio de envio
+   (ex.: `vaultmindos.com`) e adicionar os registros DNS (SPF/DKIM, e DMARC se quiser) que o Resend
+   fornece. Aguardar o status virar **Verified** (pode levar de minutos a algumas horas, depende do
+   provedor de DNS).
+2. Confirmar/gerar a API Key do Resend (Dashboard → API Keys) — pode ser a mesma já usada em
+   `RESEND_API_KEY` no `.env.local`, ou uma dedicada só para SMTP de Auth.
+3. No Supabase Dashboard do projeto **vaultmindos**: `Project Settings → Authentication → SMTP
+   Settings` → ativar **Enable Custom SMTP**.
+4. Preencher:
+   - **Sender email**: um endereço do domínio verificado no Resend (ex.:
+     `nao-responda@vaultmindos.com`) — ideal ser igual ao `RESEND_FROM_EMAIL` já usado no app, pra
+     manter o remetente consistente em todos os e-mails do produto.
+   - **Sender name**: `VaultMindOS`
+   - **Host**: `smtp.resend.com`
+   - **Port**: `465` (SSL) — alternativa `587` (STARTTLS)
+   - **Username**: `resend` (literal, é sempre essa string pro Resend)
+   - **Password**: a API Key do Resend (passo 2)
+5. Salvar.
+6. **Recomendado**: `Authentication → Email Templates` → editar o template **Confirm signup** (e os
+   outros que forem usados: Magic Link, Reset Password) para PT-BR — o padrão do Supabase vem em
+   inglês e isso é editável no Dashboard (diferente das mensagens de erro da API).
+7. **Opcional**: `Authentication → Rate Limits` → revisar/ajustar o limite de envio de e-mail — com
+   SMTP próprio, quem passa a limitar é o Resend (plano gratuito: 100 e-mails/dia, 3.000/mês), não
+   mais o limitador padrão do Supabase.
+
+### Passo a passo — testar com e-mail real
+
+1. Acessar `/signup` com um e-mail real (ex.: o seu próprio).
+2. Preencher nome, e-mail, senha (mín. 8 caracteres), aceitar Termos/Privacidade, enviar.
+3. Conferir a caixa de entrada (e o spam) — o e-mail deve chegar do domínio configurado no passo
+   anterior, sem mais cair no limite de reenvio.
+4. Clicar no link de confirmação → deve redirecionar para `/login?next=...`.
+5. Fazer login com a senha cadastrada → deve dar acesso à Academy (ou à área correspondente ao
+   `next`, ex. `/admin` se veio de lá).
+6. Conferir no Supabase Dashboard (`Authentication → Users`) que o novo usuário aparece, e que
+   `users_profile` tem a linha correspondente com `full_name` preenchido e `role = subscriber`
+   (via trigger `handle_new_user`).
+7. Repetir o mesmo teste end-to-end para `/empresas/cadastro` (cadastrar uma empresa, aprovar em
+   `/admin/academy/empresas` como admin, conferir que `/empresas` reflete o status "Aprovada").
