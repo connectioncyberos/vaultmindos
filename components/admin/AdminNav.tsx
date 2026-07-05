@@ -9,6 +9,7 @@ const LINKS = [
   { href: "/admin/tags", label: "Tags" },
   { href: "/admin/seo", label: "SEO" },
   { href: "/admin/academy/empresas", label: "Empresas" },
+  { href: "/admin/academy/financeiro", label: "Financeiro" },
 ];
 
 /** Nav do CMS (Modulo 7) — mesma em toda rota /admin/*. Topo fixo (sticky). */

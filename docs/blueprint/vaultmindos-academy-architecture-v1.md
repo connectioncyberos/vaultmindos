@@ -389,3 +389,74 @@ como porta de entrada. Checkout Pro (página hospedada do Mercado Pago) em vez d
 - Cobrança recorrente/assinatura — o modelo atual é pagamento único por curso.
 - Split de pagamento pra empresa parceira (Fase 2 B2B) — matrícula patrocinada continua gratuita por
   enquanto (ver seção 9).
+
+## 13. Sessão de testes em sandbox + painel financeiro (2026-07-04)
+
+Primeira rodada real de testes ponta a ponta do gate de pagamento, em `localhost`. Resumo do que
+foi encontrado e corrigido, pra não redescobrir o mesmo problema numa sessão futura.
+
+### Achados do teste em sandbox
+
+1. **`auto_return` quebra em `localhost`.** O Mercado Pago exige domínio real (com DNS) em
+   `back_urls.success` quando `auto_return: "approved"` é enviado — em `localhost` a API recusa a
+   criação da preferência (`invalid_auto_return`). Corrigido em `services/mercadopago/client.ts`: só
+   envia `auto_return` quando a URL de retorno não é `localhost`/`127.0.0.1`. Em produção (domínio
+   real) o comportamento automático volta a valer.
+2. **Sem `auto_return`, o Mercado Pago não redireciona sozinho de volta** — mostra um link/botão de
+   retorno na própria página de resultado. Em alguns fluxos (recusa, boleto) esse link não apareceu
+   de forma confiável no sandbox; o caminho alternativo que funcionou foi usar o **número da
+   operação** mostrado na tela de aprovação como `payment_id` manual
+   (`?payment_id=<numero>` na página do curso) pra disparar a reconciliação.
+3. **Formulário de cartão do checkout falha em aba anônima/incógnito** (erro imediato "Não é
+   possível pagar com este cartão" ao digitar o número, mesmo com dados corretos da documentação
+   oficial). Numa janela normal do navegador o mesmo cartão funcionou. Se algum teste futuro travar
+   assim, checar aba anônima antes de suspeitar do código.
+4. **Pix não aparece no checkout** — não é bug: exige a conta vendedora (a conta real vinculada à
+   aplicação) ter uma chave Pix cadastrada e verificada. Ação do fundador, fora do que a IA configura.
+5. **Cenários de recusa/pendente (`OTHE`, boleto) terminaram numa tela genérica "Ocorreu um erro"**
+   do próprio Mercado Pago em vez da tela específica esperada — provável efeito colateral de
+   `back_urls` apontando pra `localhost` nesses fluxos. Não impede validar a regra de negócio: sem
+   reconciliação bem-sucedida, `reconcilePayment` nunca roda, e `enrollments` nunca é tocada (só
+   acontece dentro do `if (newStatus === "APPROVED")` — ver `lib/payments/grant.ts`). Validado
+   recarregando a página do curso sem parâmetro e confirmando que o botão "Comprar acesso" continua
+   aparecendo (ou seja, nenhum acesso foi liberado indevidamente).
+6. **Script de reset pra repetir testes** (apaga matrícula/pagamento de um usuário+curso específico,
+   sem afetar mais nada):
+   ```sql
+   delete from enrollments
+   where course_id = (select id from courses where slug = '<slug-do-curso>')
+     and user_id = (select id from auth.users where email = '<email-de-teste>');
+
+   delete from payments
+   where course_id = (select id from courses where slug = '<slug-do-curso>')
+     and user_id = (select id from auth.users where email = '<email-de-teste>');
+   ```
+
+### Painel financeiro (admin) — `migration 005`
+
+- `sql/migrations/005_admin_financeiro.sql`: adiciona policy de SELECT admin em `users_profile`
+  (antes só existia "cada um lê o próprio perfil" — nem o admin conseguia ver nome de outro usuário)
+  e cadastra 3 cursos de teste em faixas de preço (`teste-preco-baixo` R$19,90, `teste-preco-medio`
+  R$97,00, `teste-preco-alto` R$497,00), propositalmente fora do catálogo (`sector_id = null`) pra
+  não aparecerem pra alunos reais — só acessíveis por link direto.
+- `/admin/academy/financeiro` (só role `admin`): cards de receita aprovada/vendas/ticket médio,
+  filtro por curso, tabela de pagamentos (curso, aluno, valor, status, data).
+- Limitação conhecida: a tabela mostra o **nome completo** do `users_profile`, não o e-mail — o
+  e-mail do Supabase Auth só é acessível via service role key, reservada de propósito só pro
+  webhook/confirmação (ver `lib/supabase/service.ts`). Se precisar do e-mail no painel no futuro,
+  avaliar expor isso via uma function `security definer` bem restrita, em vez de abrir o uso da
+  service role key pra mais rotas.
+
+### Checklist antes de ir pra produção de verdade
+
+- [ ] Rodar `004_course_payments.sql` e `005_admin_financeiro.sql` no ambiente de produção do Supabase
+      (se ainda não rodados lá).
+- [ ] Ajustar `price_cents` real do curso piloto (hoje é o placeholder de teste).
+- [ ] Trocar `MERCADOPAGO_ACCESS_TOKEN` pela credencial de **produção**.
+- [ ] Cadastrar `MERCADOPAGO_ACCESS_TOKEN` e `SUPABASE_SERVICE_ROLE_KEY` nas variáveis de ambiente do
+      **projeto no Vercel** (Settings → Environment Variables) — o `.env.local` não viaja no deploy.
+- [ ] Com domínio real em produção, `auto_return` volta a funcionar sozinho — reconfirmar o fluxo de
+      redirecionamento automático de aprovação lá (não só via `?payment_id=` manual).
+- [ ] Cadastrar uma chave Pix na conta vendedora, se quiser oferecer Pix como opção de pagamento.
+- [ ] Remover ou manter oculto os 3 cursos de teste (`teste-preco-*`) antes de considerar o catálogo
+      "limpo" pra produção — hoje eles não aparecem pra ninguém, mas continuam no banco.

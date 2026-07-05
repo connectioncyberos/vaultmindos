@@ -325,6 +325,18 @@ export async function getOrganizationForUser(
   };
 }
 
+/** Cursos com preço definido (pagos) — dropdown de filtro do painel financeiro (admin). */
+export async function getPaidCourses(): Promise<Course[]> {
+  const supabase = createClient();
+  const { data } = await supabase
+    .from("courses")
+    .select("id, sector_id, slug, title, description, level, is_active, price_cents")
+    .not("price_cents", "is", null)
+    .gt("price_cents", 0)
+    .order("title", { ascending: true });
+  return (data ?? []).map(mapCourse);
+}
+
 /** Fila de aprovação (admin) — organizações por status, mais recentes primeiro. */
 export async function getOrganizationsByStatus(
   status: "PENDING" | "APPROVED" | "REJECTED",

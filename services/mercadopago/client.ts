@@ -49,6 +49,15 @@ export interface CreatePreferenceResult {
  * usar sempre `sandbox_init_point`.
  */
 export async function createPreference(input: CreatePreferenceInput): Promise<CreatePreferenceResult> {
+  // O Mercado Pago exige que `back_urls.success` seja um domínio real
+  // (com DNS) quando `auto_return` é usado — em `localhost` ele recusa
+  // a preferência com "auto_return invalid. back_url.success must be
+  // defined". Por isso só mandamos `auto_return` fora do ambiente local;
+  // em dev, o comprador simplesmente clica no botão de retorno que o
+  // próprio Mercado Pago exibe na página de resultado (back_urls
+  // continua valendo normalmente, só não há redirect automático).
+  const isLocalReturnUrl = /^https?:\/\/(localhost|127\.0\.0\.1)/i.test(input.successUrl);
+
   const response = await fetch(`${MP_API}/checkout/preferences`, {
     method: "POST",
     headers: {
@@ -71,7 +80,7 @@ export async function createPreference(input: CreatePreferenceInput): Promise<Cr
         failure: input.failureUrl,
         pending: input.pendingUrl,
       },
-      auto_return: "approved",
+      ...(isLocalReturnUrl ? {} : { auto_return: "approved" }),
       notification_url: input.notificationUrl,
     }),
   });

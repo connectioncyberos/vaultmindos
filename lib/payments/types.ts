@@ -11,3 +11,18 @@ export interface Payment {
   created_at: string;
   updated_at: string;
 }
+
+/** Pagamento + dados pra exibição no painel financeiro (admin). */
+export interface PaymentForAdmin extends Payment {
+  courseTitle: string;
+  courseSlug: string;
+  studentName: string;
+}
+
+export interface PaymentTotals {
+  /** Soma de amount_cents só dos pagamentos APPROVED. */
+  revenueCents: number;
+  approvedCount: number;
+  /** revenueCents / approvedCount — 0 se não houver nenhuma venda aprovada. */
+  averageTicketCents: number;
+}
