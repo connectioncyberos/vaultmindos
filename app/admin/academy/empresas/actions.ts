@@ -4,6 +4,7 @@ import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import { getCurrentUser } from "@/lib/auth/session";
+import { logAuditEvent } from "@/lib/audit/log";
 
 /**
  * Aprovação de empresa parceira (Fase 2). Diferente do resto do CMS
@@ -31,6 +32,13 @@ export async function approveOrganizationAction(formData: FormData) {
     .update({ status: "APPROVED", reviewed_by: admin.id, reviewed_at: new Date().toISOString() })
     .eq("id", id);
 
+  await logAuditEvent(supabase, {
+    actorId: admin.id,
+    action: "organization.approve",
+    entityType: "organization",
+    entityId: id,
+  });
+
   revalidatePath("/admin/academy/empresas");
 }
 
@@ -44,6 +52,13 @@ export async function rejectOrganizationAction(formData: FormData) {
     .from("organizations")
     .update({ status: "REJECTED", reviewed_by: admin.id, reviewed_at: new Date().toISOString() })
     .eq("id", id);
+
+  await logAuditEvent(supabase, {
+    actorId: admin.id,
+    action: "organization.reject",
+    entityType: "organization",
+    entityId: id,
+  });
 
   revalidatePath("/admin/academy/empresas");
 }

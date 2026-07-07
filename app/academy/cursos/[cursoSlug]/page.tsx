@@ -7,9 +7,11 @@ import {
   getEnrollment,
   getUserProgressForLessons,
   getCertificateForCourse,
+  hasCompletedNivelamento,
 } from "@/lib/academy/queries";
 import { reconcilePayment } from "@/lib/payments/grant";
-import { enrollAction, createCheckoutAction } from "../../actions";
+import { getActiveGrant } from "@/lib/scholarships/queries";
+import { enrollAction, createCheckoutAction, redeemScholarshipCouponAction } from "../../actions";
 
 const BRL = new Intl.NumberFormat("pt-BR", { style: "currency", currency: "BRL" });
 
@@ -19,7 +21,7 @@ export default async function CursoPage({
   searchParams,
 }: {
   params: { cursoSlug: string };
-  searchParams: { payment_id?: string; checkout?: string; checkout_error?: string };
+  searchParams: { payment_id?: string; checkout?: string; checkout_error?: string; bolsa_aplicada?: string };
 }) {
   const user = (await getCurrentUser())!;
 
@@ -41,14 +43,27 @@ export default async function CursoPage({
     }
   }
 
-  const [content, enrollment, certificate] = await Promise.all([
+  const [content, enrollment, certificate, nivelamentoOk] = await Promise.all([
     getCourseWithContent(course.id),
     getEnrollment(user.id, course.id),
     getCertificateForCourse(user.id, course.id),
+    course.sector_id ? hasCompletedNivelamento(user.id) : Promise.resolve(true),
   ]);
   if (!content) notFound();
 
   const isPaidCourse = !!course.price_cents && course.price_cents > 0;
+  // Gate real do Nivelamento (Fase 2 — blueprint seção 14): só se aplica
+  // a cursos de setor (trilha de especialização); Nivelamento em si e
+  // cursos de teste (sector_id null) não exigem pré-requisito.
+  const requiresNivelamento = !!course.sector_id && !nivelamentoOk;
+
+  // Bolsa (cupom resgatado ou concessão direta do admin) — se existir,
+  // troca o preço exibido e o valor do botão de compra pelo valor com
+  // desconto (ver lib/scholarships).
+  const grant = isPaidCourse && !enrollment ? await getActiveGrant(user.id, course.id) : null;
+  const finalPriceCents = grant
+    ? Math.round((course.price_cents! * (100 - grant.discount_percent)) / 100)
+    : course.price_cents;
 
   const allLessonIds = content.modules.flatMap((m) => m.lessons.map((l) => l.id));
   const progressMap = enrollment
@@ -72,9 +87,29 @@ export default async function CursoPage({
           <p className="text-base leading-relaxed text-neutral-400">{course.description}</p>
         )}
         {isPaidCourse && !enrollment && (
-          <p className="text-lg font-semibold text-emerald-400">{BRL.format(course.price_cents! / 100)}</p>
+          <p className="flex flex-wrap items-baseline gap-2 text-lg font-semibold text-emerald-400">
+            {grant ? (
+              <>
+                <span className="text-sm font-normal text-neutral-500 line-through">
+                  {BRL.format(course.price_cents! / 100)}
+                </span>
+                <span>{BRL.format(finalPriceCents! / 100)}</span>
+                <span className="text-xs font-normal text-emerald-300">
+                  bolsa de {grant.discount_percent}% aplicada
+                </span>
+              </>
+            ) : (
+              BRL.format(course.price_cents! / 100)
+            )}
+          </p>
         )}
       </div>
+
+      {searchParams?.bolsa_aplicada === "1" && (
+        <p className="rounded-md border border-emerald-800 bg-emerald-950/30 p-3 text-sm text-emerald-300">
+          Bolsa aplicada com sucesso.
+        </p>
+      )}
 
       {paymentJustReconciled === "APPROVED" && enrollment && (
         <p className="rounded-md border border-emerald-800 bg-emerald-950/30 p-3 text-sm text-emerald-300">
@@ -105,17 +140,52 @@ export default async function CursoPage({
       )}
 
       {!enrollment ? (
-        isPaidCourse ? (
-          <form action={createCheckoutAction}>
-            <input type="hidden" name="course_id" value={course.id} />
-            <input type="hidden" name="course_slug" value={course.slug} />
-            <button
-              type="submit"
-              className="w-fit rounded-md bg-emerald-600 px-4 py-2 text-sm font-medium text-white hover:bg-emerald-500"
+        requiresNivelamento ? (
+          <div className="rounded-md border border-amber-900/50 bg-amber-950/20 p-4">
+            <p className="text-sm font-medium text-amber-200">
+              Pré-requisito: Treinamento de Nivelamento
+            </p>
+            <p className="mt-1 text-sm text-amber-200/80">
+              Esta é uma trilha de especialização — conclua o Nivelamento primeiro pra desbloquear a
+              matrícula aqui.
+            </p>
+            <Link
+              href="/academy/cursos/nivelamento"
+              className="mt-3 inline-block rounded-md border border-amber-700 px-3 py-1.5 text-sm font-medium text-amber-200 hover:bg-amber-950/40"
             >
-              Comprar acesso — {BRL.format(course.price_cents! / 100)}
-            </button>
-          </form>
+              Ir para o Nivelamento →
+            </Link>
+          </div>
+        ) : isPaidCourse ? (
+          <div className="flex flex-col gap-3">
+            <form action={createCheckoutAction}>
+              <input type="hidden" name="course_id" value={course.id} />
+              <input type="hidden" name="course_slug" value={course.slug} />
+              <button
+                type="submit"
+                className="w-fit rounded-md bg-emerald-600 px-4 py-2 text-sm font-medium text-white hover:bg-emerald-500"
+              >
+                Comprar acesso — {BRL.format(finalPriceCents! / 100)}
+              </button>
+            </form>
+            {!grant && (
+              <form action={redeemScholarshipCouponAction} className="flex flex-wrap items-center gap-2">
+                <input type="hidden" name="course_id" value={course.id} />
+                <input type="hidden" name="course_slug" value={course.slug} />
+                <input
+                  name="coupon_code"
+                  placeholder="Código de bolsa (opcional)"
+                  className="rounded-md border border-neutral-700 bg-neutral-950 px-3 py-1.5 text-sm text-neutral-100"
+                />
+                <button
+                  type="submit"
+                  className="rounded-md border border-neutral-700 px-3 py-1.5 text-sm text-neutral-300 hover:border-emerald-500 hover:text-emerald-400"
+                >
+                  Aplicar cupom
+                </button>
+              </form>
+            )}
+          </div>
         ) : (
           <form action={enrollAction}>
             <input type="hidden" name="course_id" value={course.id} />

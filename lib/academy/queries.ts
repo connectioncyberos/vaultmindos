@@ -2,6 +2,7 @@ import { createClient } from "@/lib/supabase/server";
 import type {
   Certificate,
   CertificateWithCourse,
+  Competency,
   Course,
   CourseWithContent,
   Enrollment,
@@ -12,6 +13,16 @@ import type {
   OrganizationMember,
   Sector,
 } from "@/lib/types/academy";
+
+function mapCompetency(row: unknown): Competency {
+  const r = row as Record<string, unknown>;
+  return {
+    id: r.id as string,
+    sector_id: (r.sector_id as string | null) ?? null,
+    name: r.name as string,
+    kind: r.kind as Competency["kind"],
+  };
+}
 
 /**
  * Camada de acesso a dados da Academy (Fase 1). Mesma escolha do
@@ -325,6 +336,24 @@ export async function getOrganizationForUser(
   };
 }
 
+/** Todas as competências do catálogo — usado na autoavaliação do perfil de candidato e no match de vagas. */
+export async function getAllCompetencies(): Promise<Competency[]> {
+  const supabase = createClient();
+  const { data } = await supabase
+    .from("competencies")
+    .select("id, sector_id, name, kind")
+    .order("name", { ascending: true });
+  return (data ?? []).map(mapCompetency);
+}
+
+/** Nivelamento concluído = tem certificado emitido pro curso "nivelamento". Usado no gate real (Fase 2). */
+export async function hasCompletedNivelamento(userId: string): Promise<boolean> {
+  const nivelamento = await getNivelamentoCourse();
+  if (!nivelamento) return true; // sem curso de nivelamento cadastrado, não bloqueia nada
+  const certificate = await getCertificateForCourse(userId, nivelamento.id);
+  return !!certificate;
+}
+
 /** Cursos com preço definido (pagos) — dropdown de filtro do painel financeiro (admin). */
 export async function getPaidCourses(): Promise<Course[]> {
   const supabase = createClient();
@@ -333,6 +362,26 @@ export async function getPaidCourses(): Promise<Course[]> {
     .select("id, sector_id, slug, title, description, level, is_active, price_cents")
     .not("price_cents", "is", null)
     .gt("price_cents", 0)
+    .order("title", { ascending: true });
+  return (data ?? []).map(mapCourse);
+}
+
+/** Todos os setores, incluindo inativos — dropdown do formulário de criação de curso (admin). */
+export async function getAllSectorsForAdmin(): Promise<Sector[]> {
+  const supabase = createClient();
+  const { data } = await supabase
+    .from("sectors")
+    .select("id, slug, name, description, is_active")
+    .order("name", { ascending: true });
+  return (data ?? []).map(mapSector);
+}
+
+/** Todos os cursos, incluindo inativos/teste — tela de gestão de cursos (admin). */
+export async function getAllCoursesForAdmin(): Promise<Course[]> {
+  const supabase = createClient();
+  const { data } = await supabase
+    .from("courses")
+    .select("id, sector_id, slug, title, description, level, is_active, price_cents")
     .order("title", { ascending: true });
   return (data ?? []).map(mapCourse);
 }

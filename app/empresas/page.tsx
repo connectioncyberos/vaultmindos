@@ -86,10 +86,18 @@ export default async function EmpresasPage() {
         )}
 
         {organization.status === "APPROVED" && (
-          <p className="rounded-md border border-neutral-800 bg-neutral-900 p-4 text-sm text-neutral-400">
-            Empresa aprovada. A tela de matrícula patrocinada e progresso da equipe (convidar
-            colaboradores, acompanhar formação) é a próxima etapa da Fase 2 — ainda em construção.
-          </p>
+          <div className="flex flex-col gap-3">
+            <p className="rounded-md border border-neutral-800 bg-neutral-900 p-4 text-sm text-neutral-400">
+              Empresa aprovada. A tela de matrícula patrocinada e progresso da equipe (convidar
+              colaboradores, acompanhar formação) ainda está em construção.
+            </p>
+            <Link
+              href="/empresas/vagas"
+              className="w-fit rounded-md bg-emerald-600 px-4 py-2 text-sm font-medium text-white hover:bg-emerald-500"
+            >
+              Publicar e gerenciar vagas →
+            </Link>
+          </div>
         )}
       </div>
       <Footer />

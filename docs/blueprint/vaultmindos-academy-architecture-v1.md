@@ -460,3 +460,176 @@ foi encontrado e corrigido, pra não redescobrir o mesmo problema numa sessão f
 - [ ] Cadastrar uma chave Pix na conta vendedora, se quiser oferecer Pix como opção de pagamento.
 - [ ] Remover ou manter oculto os 3 cursos de teste (`teste-preco-*`) antes de considerar o catálogo
       "limpo" pra produção — hoje eles não aparecem pra ninguém, mas continuam no banco.
+
+## 14. Portal de Empregabilidade — compilação de decisão (2026-07-05)
+
+Origem: dois textos do fundador foram analisados nesta data — (1) uma tese de valor/arquitetura em
+linguagem institucional (RBAC/RLS multi-tenant, "esteira de progressão linear bloqueada", "perfil
+profissional dinâmico", integração com um futuro Portal Social/Cidadania) e (2) um roteiro de
+apresentação/pitch focado em primeiro emprego e recolocação, com jornada do usuário, ferramentas
+de currículo, simulação de entrevista, matching de vagas e valor pra empresas parceiras.
+
+**Decisão explícita do fundador:** a integração com o Portal Social/Cidadania (atendimento jurídico,
+médico, odontológico via identidade unificada) fica **fora de escopo por enquanto** — só entra depois
+que o Portal Cidadania (produto separado) estiver pronto. Não implementar nada disso agora.
+
+**Decisão explícita do fundador:** elevar a ambição do Academy dentro do VaultMindOS de um módulo
+de cursos B2C/B2B para uma **área de aprendizado enterprise de nível universal** — não pensar o
+desenho apenas para o mercado brasileiro. Isso não significa construir i18n agora (decisão de adiar
+i18n continua valendo, seção 11) — significa que, ao desenhar os novos módulos abaixo (perfil de
+candidato, vagas, ferramentas de carreira), os campos e a modelagem devem evitar acoplamento
+desnecessário a conceitos exclusivamente brasileiros (ex.: CPF deve ser um campo de **documento de
+identidade**, com tipo variável — CPF, passaporte, national ID — e não uma coluna `cpf` fixa),
+preparando terreno pra expansão futura sem exigir retrabalho de schema.
+
+### Gap encontrado: retórica vs. sistema real
+
+Cruzando os dois textos com o que existe hoje no código (auditado nesta sessão):
+
+| Promessa dos textos | Existe hoje? | Observação |
+|---|---|---|
+| RBAC + RLS multi-tenant, isolamento por empresa | **Sim** | Auditado em produção nesta sessão — RLS habilitado nas 26 tabelas, policies corretas. |
+| "Banco de dados trata acesso indevido como dado inexistente" | **Sim** | Comportamento real de RLS do Postgres, validado. |
+| Esteira de progressão linear **bloqueada** (Nivelamento obrigatório) | **Não** | Hoje é só um card de destaque na home; nenhuma trava técnica impede pular pro curso avançado. |
+| Perfil profissional dinâmico (dado comportamental/qualificatório/progresso) | **Não** | `users_profile` só tem nome/avatar/papel. |
+| Documento de identidade vinculado à certificação | **Não** | Nenhum campo de documento de identidade existe no schema hoje. |
+| Ferramenta de currículo | **Não** | Não existe nenhum domínio de dado pra isso. |
+| Simulação de entrevista | **Não** | Idem. |
+| Vagas + matching com empresas parceiras | **Parcial** | `job_postings`, `job_posting_competencies`, `job_matches` já existem no schema (migration 001), com RLS já escrito — só falta a lógica/telas (Fase 3, nunca iniciada). |
+| Gamificação, certificação externa reconhecida, IA de recomendação | **Não** | Tratado nos dois textos como roadmap futuro, não MVP. |
+| Motor de white-label pra parceiros | **Não** | Catálogo hoje é único, editado manualmente. |
+| Portal Social (jurídico/médico/odontológico) | **Fora de escopo** | Decisão do fundador — só depois do Portal Cidadania. |
+
+### Ordem de implementação decidida
+
+1. **Perfil de candidato** — estender identidade do usuário com documento de identidade (tipo +
+   valor, não só CPF), objetivo de carreira, indicador de primeira experiência de trabalho,
+   autoavaliação de competências.
+2. **Nivelamento como gate técnico real** — impedir matrícula/acesso a cursos de especialização
+   antes da conclusão do Nivelamento, em vez de só sugerir via UX.
+3. **Vagas + matching (Fase 3)** — construir a lógica e as telas em cima do schema que já existe e
+   já foi auditado (`job_postings`/`job_matches`), maior retorno técnico imediato por não exigir
+   desenho de tabela novo.
+4. **Construtor de currículo** — ferramenta prática, versão inicial sem IA (formulário guiado →
+   PDF).
+5. **Simulação de entrevista** — versão inicial roteirizada (perguntas fixas + autoavaliação),
+   sem IA.
+6. **Depois:** gamificação, IA de recomendação, certificação externa reconhecida, integração com
+   Portal Social/Cidadania — todos tratados como roadmap pós-MVP nos dois textos originais.
+
+## 15. Implementação dos itens 1-5 (2026-07-05)
+
+Construído nesta sessão, sem interrupção pra validar cada item — validação em bloco no final, por
+pedido do fundador. Ordem de migrations a rodar (dependem umas das outras nessa sequência):
+`006_perfil_candidato.sql` → `007_vagas_matching.sql` → `008_simulacao_entrevista.sql`.
+
+### 1) Perfil de candidato
+- `sql/migrations/006_perfil_candidato.sql`: `users_profile` ganha `identity_doc_type` (CPF /
+  PASSPORT / NATIONAL_ID / OTHER — tipo variável, decisão de nível universal), `identity_doc_value`,
+  `career_objective`, `is_first_job_seeker`. Nova tabela `candidate_competency_ratings` (autoavaliação
+  1-5 por competência, reaproveitando o catálogo `competencies` já existente).
+- `lib/candidate/` (novo domínio): `types.ts`, `queries.ts` (`getCandidateProfile`,
+  `getCompetencyRatings`, `getResumeData`).
+- `/academy/perfil`: formulário de perfil + autoavaliação de competências (botões 1-5 por
+  competência, upsert individual).
+
+### 2) Gate real do Nivelamento
+- `lib/academy/queries.ts`: `hasCompletedNivelamento(userId)` — completo = tem certificado emitido
+  pro curso `nivelamento` (reaproveita a emissão automática já existente, não inventa um status novo
+  de "curso completo").
+- `enrollAction` e `createCheckoutAction` (`app/academy/actions.ts`) recusam matrícula/checkout em
+  qualquer curso com `sector_id` preenchido se o Nivelamento não estiver concluído — verificado na
+  Server Action, não só escondendo botão.
+- Página do curso (`app/academy/cursos/[cursoSlug]/page.tsx`) mostra banner de pré-requisito com link
+  pro Nivelamento em vez do botão de matrícula/compra, quando aplicável.
+
+### 3) Vagas + Matching (Fase 3)
+- `sql/migrations/007_vagas_matching.sql`: abre `job_postings`/`job_posting_competencies` pra
+  candidatos verem vagas `OPEN` (antes só empresa/admin liam); RH da empresa passa a poder gerenciar
+  competências da própria vaga; candidato pode inserir a própria linha em `job_matches`
+  (`SUGGESTED`); RH atualiza status (`CONTACTED`/`HIRED`/`REJECTED`); constraint
+  `unique(job_posting_id, user_id)` evita duplicar interesse; nova policy em `users_profile` deixa o
+  RH ver o nome de candidatos que se aplicaram nas vagas **dele** (só isso, escopo restrito).
+- `lib/jobs/` (novo domínio): `types.ts`, `queries.ts` — `getOpenJobPostingsForCandidate` (calcula
+  match 0-100% comparando competências exigidas da vaga com a autoavaliação do candidato, v1 sem IA),
+  `getJobPostingsForOrg`, `getJobMatchesForPosting`, `getMyJobMatches`.
+- `/academy/vagas`: candidato vê vagas abertas com % de match e competências exigidas, clica "Tenho
+  interesse", acompanha "Minhas candidaturas".
+- `/empresas/vagas`: RH/gestor de empresa aprovada publica vaga (título, setor, competências) e
+  gerencia o pipeline de candidatos (mudar status). Link adicionado em `/empresas`.
+
+### 4) Construtor de currículo
+- `getResumeData` (`lib/candidate/queries.ts`) junta perfil + competências bem avaliadas (nota ≥ 3) +
+  certificados emitidos no VaultMindOS.
+- `/academy/curriculo`: preview do currículo com classes `print:` que viram preto-no-branco só na
+  impressão (currículo escuro impresso desperdiçaria tinta). Botão "Imprimir / Salvar como PDF"
+  (`components/academy/PrintButton.tsx`, `window.print()`) — **sem biblioteca de PDF nova**, decisão
+  deliberada porque esta sessão não consegue rodar `npm install`. `AcademyLayout` ganhou
+  `print:hidden` na navegação pra a impressão sair limpa em qualquer página da Academy, não só nesta.
+
+### 5) Simulação de entrevista v1
+- `sql/migrations/008_simulacao_entrevista.sql`: tabela `interview_practice_answers` (pergunta fixa
+  por slug, resposta em texto, autoavaliação de confiança 1-5), RLS dono/admin.
+- `lib/interview/questions.ts`: 9 perguntas fixas em PT-BR focadas em primeiro emprego/recolocação
+  (sem experiência prévia, ponto forte/fraco, trabalho em equipe etc.), cada uma com uma dica.
+- `/academy/entrevista`: responde por escrito + autoavalia confiança por pergunta. Sem IA, sem
+  correção automática — espaço de prática e autorreflexão, como decidido.
+
+### Checklist de validação (fazer depois de tudo revisado)
+
+- [ ] Rodar as 3 migrations (006, 007, 008) no Supabase, nessa ordem.
+- [ ] `/academy/perfil` — preencher perfil e autoavaliar pelo menos 2-3 competências.
+- [ ] Tentar se matricular num curso de setor (ex.: Administrativo 4.0) **sem** ter concluído o
+      Nivelamento — confirmar que aparece o banner de pré-requisito e não a opção de comprar/matricular.
+- [ ] Concluir o Nivelamento (ou usar um usuário que já tenha certificado) e confirmar que o gate libera.
+- [ ] `/empresas/vagas` (como RH de empresa aprovada) — publicar uma vaga com 1-2 competências.
+- [ ] `/academy/vagas` (como candidato) — ver a vaga, conferir se o % de match faz sentido com as notas
+      dadas no perfil, clicar "Tenho interesse".
+- [ ] Voltar em `/empresas/vagas` e confirmar que o candidato aparece no pipeline, mudar o status.
+- [ ] `/academy/curriculo` — conferir se os dados aparecem certos e testar Ctrl+P (ou o botão) pra ver
+      o preview de impressão em preto-no-branco.
+- [ ] `/academy/entrevista` — responder 1-2 perguntas, recarregar a página e confirmar que a resposta
+      e a confiança continuam salvas.
+- [ ] Rodar `npx tsc --noEmit` (ou equivalente) antes do git push, já que boa parte disso não pôde ser
+      compilado nesta sessão (sem acesso a terminal).
+
+## 16. Parecer Enterprise comparativo + auditoria mínima (2026-07-06)
+
+Os quatro documentos de visão "Enterprise/CLEP" trazidos pelo fundador foram consolidados em
+`docs/blueprint/vaultmindos-comparativo-enterprise-v1.md` e enviados para outra IA produzir um
+parecer técnico comparativo. Veredito: o projeto está em fase de **MVP avançado / produto comercial
+inicial**, não em fase Enterprise — evoluir incrementalmente o `vaultmindos`, sem novo repositório e
+sem migrar stack (NestJS/Kubernetes/Kafka) agora. Cronograma completo em
+`docs/blueprint/vaultmindos-cronograma-implementacao-v1.md`.
+
+Executado nesta rodada (Prioridade 4 do cronograma — auditoria mínima):
+`sql/migrations/009_audit_log.sql` (tabela `audit_log`, RLS admin-only), `lib/audit/log.ts`
+(`logAuditEvent`), `lib/audit/queries.ts` (`getRecentAuditLog`), `/admin/academy/auditoria` (tela de
+consulta). Log integrado em: aprovação/rejeição de empresa, mudança de status de pagamento
+(`reconcilePayment`), publicação de vaga e mudança de status, avanço de candidato no pipeline.
+
+Também executado (Prioridade 3 — financeiro básico): exportação CSV do painel financeiro
+(`app/admin/academy/financeiro/export/route.ts`, botão na página).
+
+Decisão explicitamente deixada em aberto para o fundador: o que fazer com os 3 cursos de teste
+(manter / desativar / apagar) — ver seção "Pergunta em aberto" do cronograma.
+
+## 17. Reset total (dev) + sistema de bolsas + tela de criação de curso (2026-07-06)
+
+Pedido do fundador: zerar o ambiente de desenvolvimento e testar do zero — cadastro em todos os
+níveis (admin, empresa/RH, aluno), criação de um curso básico pela própria aplicação (não só SQL), e
+bolsa 100%/50%/pagamento normal. Escopo do reset confirmado com o fundador: tudo (portal de conteúdo
++ Academy + usuários), só em desenvolvimento; modelo de bolsa confirmado: cupom autosserviço +
+concessão direta pelo admin.
+
+Construído: `sql/migrations/010_bolsas.sql` (`scholarship_coupons`, `scholarship_grants`, função
+`redeem_coupon()` security definer, colunas novas em `payments`); `lib/scholarships/` (types,
+queries); resgate de cupom e cálculo de desconto integrados em `app/academy/actions.ts` e na página do
+curso; `/admin/academy/bolsas` (criar cupom, conceder bolsa direta); `/admin/academy/cursos` +
+`/novo` + `/[cursoId]` (tela de criação de curso/módulo/aula que não existia até agora — cursos só
+eram criados via SQL de migration).
+
+Também: `sql/scripts/reset-dev-database.sql` (script de reset total, só para o usuário rodar —
+exclusão permanente de dado não é executada pela IA) e
+`docs/blueprint/vaultmindos-roteiro-teste-zero-v1.md` (roteiro passo a passo completo, do reset até
+os 3 fluxos de matrícula testados).

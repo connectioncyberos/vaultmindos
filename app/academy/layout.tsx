@@ -18,8 +18,10 @@ export default async function AcademyLayout({ children }: { children: ReactNode 
 
   return (
     <div>
-      <AcademyNav user={user} />
-      <main className="mx-auto max-w-4xl px-4 py-6">{children}</main>
+      <div className="print:hidden">
+        <AcademyNav user={user} />
+      </div>
+      <main className="mx-auto max-w-4xl px-4 py-6 print:max-w-none print:p-0">{children}</main>
     </div>
   );
 }

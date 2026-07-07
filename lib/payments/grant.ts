@@ -1,5 +1,6 @@
 import { createServiceClient } from "@/lib/supabase/service";
 import { getPayment } from "@/services/mercadopago/client";
+import { logAuditEvent } from "@/lib/audit/log";
 import type { PaymentStatus } from "./types";
 
 function mapMercadoPagoStatus(mpStatus: string, currentStatus: PaymentStatus): PaymentStatus {
@@ -46,7 +47,8 @@ export async function reconcilePayment(mpPaymentId: string): Promise<{ status: P
     throw new Error(`payments.id ${ourPaymentId} (external_reference) não encontrado no banco.`);
   }
 
-  const newStatus = mapMercadoPagoStatus(mpPayment.status, payment.status as PaymentStatus);
+  const previousStatus = payment.status as PaymentStatus;
+  const newStatus = mapMercadoPagoStatus(mpPayment.status, previousStatus);
 
   await supabase
     .from("payments")
@@ -62,6 +64,19 @@ export async function reconcilePayment(mpPaymentId: string): Promise<{ status: P
       { user_id: payment.user_id, course_id: payment.course_id, status: "ACTIVE" },
       { onConflict: "user_id, course_id", ignoreDuplicates: true },
     );
+  }
+
+  // Auditoria só quando o status de fato mudou — evita ruído em
+  // reconciliações repetidas (webhook reenviando notificação, usuário
+  // recarregando a página de retorno) que não alteram nada.
+  if (newStatus !== previousStatus) {
+    await logAuditEvent(supabase, {
+      actorLabel: "Mercado Pago — reconciliação de webhook/retorno",
+      action: "payment.status_changed",
+      entityType: "payment",
+      entityId: payment.id,
+      metadata: { from: previousStatus, to: newStatus, mpPaymentId: String(mpPayment.id) },
+    });
   }
 
   return { status: newStatus };

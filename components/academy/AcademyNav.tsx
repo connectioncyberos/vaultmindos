@@ -5,6 +5,10 @@ import type { CurrentUser } from "@/lib/auth/session";
 const LINKS = [
   { href: "/academy", label: "Dashboard" },
   { href: "/academy/certificados", label: "Certificados" },
+  { href: "/academy/perfil", label: "Perfil" },
+  { href: "/academy/curriculo", label: "Currículo" },
+  { href: "/academy/entrevista", label: "Entrevista" },
+  { href: "/academy/vagas", label: "Vagas" },
 ];
 
 /** Nav da Academy (Fase 1) — mesma em toda rota /academy/*, espelhando AdminNav.tsx. Topo fixo (sticky). */

@@ -106,9 +106,19 @@ export default async function AdminFinanceiroPage({
       </section>
 
       <section className="flex flex-col gap-3">
-        <h2 className="text-lg font-semibold text-neutral-100">
-          Pagamentos {pagamentos.length > 0 && `(${pagamentos.length})`}
-        </h2>
+        <div className="flex flex-wrap items-center justify-between gap-2">
+          <h2 className="text-lg font-semibold text-neutral-100">
+            Pagamentos {pagamentos.length > 0 && `(${pagamentos.length})`}
+          </h2>
+          {pagamentos.length > 0 && (
+            <a
+              href={`/admin/academy/financeiro/export${cursoFiltro ? `?curso=${cursoFiltro.slug}` : ""}`}
+              className="rounded-md border border-neutral-700 px-3 py-1.5 text-sm font-medium text-neutral-300 hover:border-emerald-500 hover:text-emerald-400"
+            >
+              Exportar CSV
+            </a>
+          )}
+        </div>
         {pagamentos.length === 0 ? (
           <p className="text-sm text-neutral-400">Nenhum pagamento registrado ainda.</p>
         ) : (
